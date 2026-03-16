@@ -6,12 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "reset-data": "node -e \"const fs=require('fs');const p=require('path');const d='./data';if(fs.existsSync(p.join(d,'constraints.md')))fs.unlinkSync(p.join(d,'constraints.md'));const s=p.join(d,'sops');if(fs.existsSync(s)){fs.readdirSync(s).forEach(f=>fs.unlinkSync(p.join(s,f)));fs.rmdirSync(s)}console.log('Data reset. Fresh user state.')\""
   },
   "dependencies": {
     "next": "16.1.6",
+    "openai": "^6.25.0",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "react-markdown": "^10.1.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
