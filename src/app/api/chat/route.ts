@@ -391,6 +391,15 @@ export async function POST(req: NextRequest) {
     try {
         const body: ChatRequest = await req.json();
         const messages = body.messages || [];
+
+        // --- HARD LOCK: Gatekeeper mode cannot be overridden ---
+        // When INSTANCE_MODE is gatekeeper, skip ALL tenant logic:
+        // no constraints, no resolveMode, no Extract SOP triggers.
+        if (INSTANCE_MODE === "gatekeeper") {
+            console.log("[lVl] Gatekeeper mode enforced. Bypassing tenant logic.");
+            return handleGatekeeper(messages);
+        }
+
         const requestedMode = body.mode;
         const activeSOP = body.activeSOP || null;
 
