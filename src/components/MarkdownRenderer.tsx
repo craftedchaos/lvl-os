@@ -40,6 +40,7 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
                         p: ({ children }) => <p className="text-[#878681] text-sm mb-2">{children}</p>,
                         li: ({ children }) => <li className="text-[#878681] text-sm ml-4">{children}</li>,
                         strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
+                        a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-white underline hover:text-[#878681] transition-colors">{children}</a>,
                         hr: () => <hr className="border-[#1a1a1a] my-4" />,
                     }}
                 >

@@ -77,9 +77,11 @@ function buildTerminalPitch(): NextResponse {
         "",
         "Your operation is running on memory, not infrastructure. The procedures exist — but only in your head. When you leave the room, the system degrades.",
         "",
-        "lVl OS extracts those procedures through guided conversation and turns them into documented, constraint-driven systems your team can actually follow. No templates. No generic advice. Your operations, your language, your standards.",
+        "lVl OS extracts those procedures through guided conversation and turns them into documented, constraint-driven systems your team can actually follow.",
         "",
-        "To translate this diagnosis into an executable system, DM me \"BEGIN\" on Instagram to get your secure deployment link.",
+        "**To translate this diagnosis into an executable system, click the link below to DM me \"BEGIN\" and I will provision your private instance.**",
+        "",
+        "👉 [DM 'BEGIN' TO @lvl_space.to.begin_](https://ig.me/m/lvl_space.to.begin_)",
         "",
         "CHIPS: [DM for Access] | [Unlock Full System]",
     ].join("\n");
