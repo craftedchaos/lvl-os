@@ -72,20 +72,16 @@ function detectExtractSOPTrigger(messages: ChatMessage[]): string | null {
 // ============================================================
 
 function buildTerminalPitch(): NextResponse {
-    const starterLink = process.env.STRIPE_LINK_STARTER || "#";
-    const proLink = process.env.STRIPE_LINK_PRO || "#";
-
     const pitch = [
-        "I've heard enough. Your operation has a structural vulnerability — the SOPs are in your head, not in a system.",
+        "Diagnosis complete.",
         "",
-        "lVl OS extracts those procedures through a guided AI process and turns them into documented, constraint-driven operational infrastructure your team can actually follow.",
+        "Your operation is running on memory, not infrastructure. The procedures exist — but only in your head. When you leave the room, the system degrades.",
         "",
-        "Two paths forward:",
+        "lVl OS extracts those procedures through guided conversation and turns them into documented, constraint-driven systems your team can actually follow. No templates. No generic advice. Your operations, your language, your standards.",
         "",
-        `→ Starter: ${starterLink}`,
-        `→ Pro: ${proLink}`,
+        "To translate this diagnosis into an executable system, DM me \"BEGIN\" on Instagram to get your secure deployment link.",
         "",
-        "Pick one. Or don't. Either way, that bottleneck isn't going to document itself.",
+        "CHIPS: [DM for Access] | [Unlock Full System]",
     ].join("\n");
 
     return NextResponse.json({
@@ -103,16 +99,19 @@ async function handleGatekeeper(messages: ChatMessage[]) {
         return buildTerminalPitch();
     }
 
+    // Inject turn count so the AI knows when to deliver final diagnosis
+    const turnAwarePrompt = GATEKEEPER_PROMPT + `\n\n[SYSTEM: This is the user's turn ${userTurnCount + 1} of 4. ${userTurnCount >= 3 ? "THIS IS THE FINAL DIAGNOSTIC TURN. Deliver your synthesis now. Do not ask another question." : "Ask one calibrated question. Output 3 diagnostic CHIPS."}]`;
+
     const windowedMessages = messages.slice(-10);
 
     const apiMessages: ChatMessage[] = [
-        { role: "system", content: GATEKEEPER_PROMPT },
+        { role: "system", content: turnAwarePrompt },
         ...windowedMessages,
     ];
 
     const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        max_tokens: 100,
+        max_tokens: 300,
         messages: apiMessages,
     });
 
