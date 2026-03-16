@@ -16,6 +16,30 @@ import {
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const INSTANCE_MODE = process.env.INSTANCE_MODE || "gatekeeper";
 
+// --- Rate Limiter (protects Gatekeeper on public Vercel) ---
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX = 10; // max requests per window per IP
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+// Clean stale entries every 60s to prevent memory leak
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, entry] of rateLimitMap) {
+        if (now > entry.resetAt) rateLimitMap.delete(ip);
+    }
+}, 60_000);
+
+function checkRateLimit(ip: string): boolean {
+    const now = Date.now();
+    const entry = rateLimitMap.get(ip);
+    if (!entry || now > entry.resetAt) {
+        rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+        return true; // allowed
+    }
+    entry.count++;
+    return entry.count <= RATE_LIMIT_MAX;
+}
+
 type AppMode = "gatekeeper" | "context-builder" | "sop-refinery" | "horizontal";
 
 interface ChatMessage {
@@ -353,6 +377,17 @@ function resolveMode(
 }
 
 export async function POST(req: NextRequest) {
+    // --- Rate limit check (Gatekeeper only) ---
+    if (INSTANCE_MODE === "gatekeeper") {
+        const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+        if (!checkRateLimit(ip)) {
+            return NextResponse.json(
+                { message: "Rate limit exceeded. Try again in a minute.", turnCount: 0, terminated: false, mode: "gatekeeper" as AppMode },
+                { status: 429 }
+            );
+        }
+    }
+
     try {
         const body: ChatRequest = await req.json();
         const messages = body.messages || [];
