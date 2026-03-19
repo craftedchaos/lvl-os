@@ -189,7 +189,7 @@ export default function Home() {
       : [];
 
   return (
-    <main className="flex flex-col min-h-screen bg-black">
+    <main className="flex flex-col h-full overflow-hidden bg-black">
       {/* Header */}
       <header className="px-6 py-4">
         <h1 className="text-white text-sm tracking-widest">lVl</h1>

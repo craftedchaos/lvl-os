@@ -5,6 +5,12 @@
   --font-sans: var(--font-inter);
 }
 
+html, body {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
 body {
   background: #000;
   color: #fff;
