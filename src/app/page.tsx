@@ -237,8 +237,30 @@ export default function Home() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Quick Chips */}
-      {lastAssistantChips.length > 0 && !loading && (
+      {/* Paywall CTAs (Gatekeeper Turn 5) */}
+      {terminated && (
+        <div className="px-6 py-6 border-t border-[#1a1a1a] flex flex-col gap-3">
+          <a
+            href={process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK || "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full text-center py-3 bg-white text-black text-sm font-semibold tracking-wide hover:bg-[#e0e0e0] transition-colors duration-150"
+          >
+            Deploy My Private Instance →
+          </a>
+          <a
+            href="https://ig.me/m/lvl_space.to.begin_"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full text-center py-3 border border-[#333] text-[#878681] text-sm tracking-wide hover:text-white hover:border-[#555] transition-colors duration-150"
+          >
+            I have a few questions
+          </a>
+        </div>
+      )}
+
+      {/* Quick Chips (non-terminated only) */}
+      {!terminated && lastAssistantChips.length > 0 && !loading && (
         <div className="px-6 pb-2 flex flex-wrap gap-3">
           {lastAssistantChips.map((chip, i) => (
             <button
@@ -252,21 +274,23 @@ export default function Home() {
         </div>
       )}
 
-      {/* Input */}
-      <form
-        onSubmit={handleSubmit}
-        className="px-6 py-4 border-t border-[#1a1a1a]"
-      >
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          disabled={terminated || loading}
-          placeholder={terminated ? "" : "speak. create. refine"}
-          className="w-full bg-transparent text-white text-sm outline-none placeholder-[#878681] disabled:opacity-30"
-          autoFocus
-        />
-      </form>
+      {/* Input (hidden when terminated) */}
+      {!terminated && (
+        <form
+          onSubmit={handleSubmit}
+          className="px-6 py-4 border-t border-[#1a1a1a]"
+        >
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            disabled={loading}
+            placeholder="speak. create. refine"
+            className="w-full bg-transparent text-white text-sm outline-none placeholder-[#878681] disabled:opacity-30"
+            autoFocus
+          />
+        </form>
+      )}
     </main>
   );
 }

@@ -79,11 +79,7 @@ function buildTerminalPitch(): NextResponse {
         "",
         "lVl OS extracts those procedures through guided conversation and turns them into documented, constraint-driven systems your team can actually follow.",
         "",
-        "**To translate this diagnosis into an executable system, click the link below to DM me \"BEGIN\" and I will provision your private instance.**",
-        "",
-        "👉 [DM 'BEGIN' TO @lvl_space.to.begin_](https://ig.me/m/lvl_space.to.begin_)",
-        "",
-        "CHIPS: [DM for Access] | [Unlock Full System]",
+        "**To translate this diagnosis into an executable system, deploy your private instance below.**",
     ].join("\n");
 
     return NextResponse.json({
