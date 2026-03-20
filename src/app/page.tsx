@@ -9,6 +9,9 @@ type AppMode =
   | "sop-refinery"
   | "horizontal";
 
+// Gatekeeper chat modes for the Tri-Bot state machine
+type ChatMode = "select" | "diagnostic" | "support" | "enterprise" | "faq";
+
 interface Message {
   role: "user" | "assistant" | "system-boundary";
   content: string;
@@ -35,15 +38,19 @@ export default function Home() {
   const [terminated, setTerminated] = useState(false);
   const [mode, setMode] = useState<AppMode | undefined>(undefined);
   const [activeSOP, setActiveSOP] = useState<string | null>(null);
+  const [chatMode, setChatMode] = useState<ChatMode>("select");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  async function sendMessage(text: string) {
-    if (!text.trim() || loading || terminated) return;
+  async function sendMessage(text: string, overrideChatMode?: ChatMode) {
+    if (!text.trim() || loading) return;
+    // Allow sending in terminated state only during FAQ pivot
+    if (terminated && overrideChatMode !== "faq") return;
 
+    const currentChatMode = overrideChatMode || chatMode;
     const userMessage: Message = { role: "user", content: text.trim() };
 
     // --- Mode Transition: Handle explicit mode switches ---
@@ -130,6 +137,7 @@ export default function Home() {
           messages: apiMessages,
           mode: nextMode,
           activeSOP: nextActiveSOP,
+          chatMode: currentChatMode,
         }),
       });
 
@@ -181,12 +189,36 @@ export default function Home() {
     }
   }
 
+  // --- Tri-Bot Front Door: mode selection ---
+  function handleModeSelect(selectedMode: ChatMode) {
+    setChatMode(selectedMode);
+    // Auto-send an opening message to kick off the selected mode
+    if (selectedMode === "diagnostic") {
+      sendMessage("Diagnose my operation", selectedMode);
+    } else if (selectedMode === "support") {
+      sendMessage("Support & Feedback", selectedMode);
+    } else if (selectedMode === "enterprise") {
+      sendMessage("Enterprise Inquiry", selectedMode);
+    }
+  }
+
+  // --- FAQ Escape Hatch: pivot from paywall to FAQ mode ---
+  function handleFAQPivot() {
+    setChatMode("faq");
+    setTerminated(false);
+    // Send a hidden trigger message to kick off the FAQ mode
+    sendMessage("I have a few questions before moving forward.", "faq");
+  }
+
   // Get chips from the last assistant message
   const lastMessage = messages[messages.length - 1];
   const lastAssistantChips =
     lastMessage?.role === "assistant" && !terminated
       ? parseChips(lastMessage.content).chips
       : [];
+
+  // --- Front Door State: no mode selected yet ---
+  const showFrontDoor = chatMode === "select" && messages.length === 0;
 
   return (
     <main className="flex flex-col h-full overflow-hidden bg-black">
@@ -197,7 +229,15 @@ export default function Home() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-        {messages.length === 0 && !loading && (
+        {/* Front Door Greeting */}
+        {showFrontDoor && !loading && (
+          <p className="text-[#878681] text-sm">
+            lVl OS terminal active. Select your objective.
+          </p>
+        )}
+
+        {/* Normal empty state for tenant modes */}
+        {!showFrontDoor && messages.length === 0 && !loading && (
           <p className="text-[#878681] text-sm">
             Which idea are we turning into a system?
           </p>
@@ -237,6 +277,30 @@ export default function Home() {
         <div ref={bottomRef} />
       </div>
 
+      {/* Front Door Chips (Tri-Bot Selector) */}
+      {showFrontDoor && !loading && (
+        <div className="px-6 pb-2 flex flex-wrap gap-3">
+          <button
+            onClick={() => handleModeSelect("diagnostic")}
+            className="text-[#878681] text-sm hover:text-white transition-colors duration-150 cursor-pointer"
+          >
+            [Diagnose my operation]
+          </button>
+          <button
+            onClick={() => handleModeSelect("support")}
+            className="text-[#878681] text-sm hover:text-white transition-colors duration-150 cursor-pointer"
+          >
+            [Support & Feedback]
+          </button>
+          <button
+            onClick={() => handleModeSelect("enterprise")}
+            className="text-[#878681] text-sm hover:text-white transition-colors duration-150 cursor-pointer"
+          >
+            [Enterprise Inquiry]
+          </button>
+        </div>
+      )}
+
       {/* Paywall CTAs (Gatekeeper Turn 5) */}
       {terminated && (
         <div className="px-6 py-6 border-t border-[#1a1a1a] flex flex-col gap-3">
@@ -248,19 +312,17 @@ export default function Home() {
           >
             Deploy My Private Instance →
           </a>
-          <a
-            href="https://ig.me/m/lvl_space.to.begin_"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full text-center py-3 border border-[#333] text-[#878681] text-sm tracking-wide hover:text-white hover:border-[#555] transition-colors duration-150"
+          <button
+            onClick={handleFAQPivot}
+            className="w-full text-center py-3 border border-[#333] text-[#878681] text-sm tracking-wide hover:text-white hover:border-[#555] transition-colors duration-150 cursor-pointer"
           >
             I have a few questions
-          </a>
+          </button>
         </div>
       )}
 
-      {/* Quick Chips (non-terminated only) */}
-      {!terminated && lastAssistantChips.length > 0 && !loading && (
+      {/* Quick Chips (non-terminated, non-front-door) */}
+      {!terminated && !showFrontDoor && lastAssistantChips.length > 0 && !loading && (
         <div className="px-6 pb-2 flex flex-wrap gap-3">
           {lastAssistantChips.map((chip, i) => (
             <button
@@ -274,8 +336,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* Input (hidden when terminated) */}
-      {!terminated && (
+      {/* Input (hidden when terminated or on front door) */}
+      {!terminated && !showFrontDoor && (
         <form
           onSubmit={handleSubmit}
           className="px-6 py-4 border-t border-[#1a1a1a]"

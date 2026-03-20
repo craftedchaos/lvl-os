@@ -51,6 +51,7 @@ interface ChatRequest {
     messages: ChatMessage[];
     mode?: AppMode;
     activeSOP?: string;
+    chatMode?: "select" | "diagnostic" | "support" | "enterprise" | "faq";
 }
 
 // --- Utility: Strip AI-generated CHIPS from a message ---
@@ -98,7 +99,7 @@ async function handleGatekeeper(messages: ChatMessage[]) {
     }
 
     // Inject turn count so the AI knows when to deliver final diagnosis
-    const turnAwarePrompt = GATEKEEPER_PROMPT + `\n\n[SYSTEM: This is the user's turn ${userTurnCount + 1} of 4. ${userTurnCount >= 3 ? "THIS IS THE FINAL DIAGNOSTIC TURN. Deliver your synthesis now. Do not ask another question." : "Ask one calibrated question. Output 3 diagnostic CHIPS."}]`;
+    const turnAwarePrompt = GATEKEEPER_PROMPT + OFF_TOPIC_GUARDRAIL + `\n\n[SYSTEM: This is the user's turn ${userTurnCount + 1} of 4. ${userTurnCount >= 3 ? "THIS IS THE FINAL DIAGNOSTIC TURN. Deliver your synthesis now. Do not ask another question." : "Ask one calibrated question. Output 3 diagnostic CHIPS."}]`;
 
     const windowedMessages = messages.slice(-10);
 
@@ -110,6 +111,116 @@ async function handleGatekeeper(messages: ChatMessage[]) {
     const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         max_tokens: 300,
+        messages: apiMessages,
+    });
+
+    return NextResponse.json({
+        message: completion.choices[0]?.message?.content || "...",
+        turnCount: userTurnCount,
+        terminated: false,
+        mode: "gatekeeper" as AppMode,
+    });
+}
+
+// --- Universal Off-Topic Guardrail (injected into all gatekeeper-mode prompts) ---
+const OFF_TOPIC_GUARDRAIL = `\n\nCRITICAL GUARDRAIL: If the user asks an off-topic question (e.g., math problems, coding help, general trivia, weather, politics, or anything unrelated to operations and business systems), politely decline. Respond with: "lVl is for people who want to turn ideas into constraint-driven systems for personal and business goals. Let's keep the focus there." Then gently guide them back to the active objective. Do not answer off-topic questions under any circumstances.`;
+
+// ============================================================
+// SUPPORT MODE (Gatekeeper — existing customer support)
+// ============================================================
+
+async function handleSupport(messages: ChatMessage[]) {
+    const systemPrompt = `You are the lVl OS Support agent. You help existing customers with technical issues, workflow questions, and feedback.
+
+Rules:
+1. Be concise and helpful. 1-3 sentences per response.
+2. If the issue requires manual intervention, say: "I'm flagging this for the team. You'll hear back within 24 hours."
+3. Always end with a relevant CHIPS suggestion.
+4. Do not give operational consulting. Stick to product support.` + OFF_TOPIC_GUARDRAIL;
+
+    const apiMessages: ChatMessage[] = [
+        { role: "system", content: systemPrompt },
+        ...messages.slice(-10),
+    ];
+
+    const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        max_tokens: 300,
+        messages: apiMessages,
+    });
+
+    return NextResponse.json({
+        message: completion.choices[0]?.message?.content || "...",
+        turnCount: messages.filter((m) => m.role === "user").length,
+        terminated: false,
+        mode: "gatekeeper" as AppMode,
+    });
+}
+
+// ============================================================
+// ENTERPRISE MODE (Gatekeeper — B2B inquiry intake)
+// ============================================================
+
+async function handleEnterprise(messages: ChatMessage[]) {
+    const systemPrompt = `You are the lVl OS Enterprise intake agent. You qualify B2B leads — multi-location operators, franchise groups, and teams.
+
+Rules:
+1. Ask about team size, number of locations, and primary operational pain.
+2. Keep responses to 1-2 sentences. Be clinical and direct.
+3. After 3 turns, provide a summary and say: "I'll connect you with our team for a custom deployment scope. Expect an email within 24 hours."
+4. Always provide 3 diagnostic CHIPS.
+5. Do not quote pricing. Do not discuss technical architecture.` + OFF_TOPIC_GUARDRAIL;
+
+    const apiMessages: ChatMessage[] = [
+        { role: "system", content: systemPrompt },
+        ...messages.slice(-10),
+    ];
+
+    const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        max_tokens: 300,
+        messages: apiMessages,
+    });
+
+    return NextResponse.json({
+        message: completion.choices[0]?.message?.content || "...",
+        turnCount: messages.filter((m) => m.role === "user").length,
+        terminated: false,
+        mode: "gatekeeper" as AppMode,
+    });
+}
+
+// ============================================================
+// FAQ MODE (Post-diagnostic objection handling)
+// ============================================================
+
+async function handleFAQ(messages: ChatMessage[]) {
+    const userTurnCount = messages.filter((m) => m.role === "user").length;
+    const isFirstFAQTurn = userTurnCount <= 1;
+
+    const systemPrompt = `You are the lVl OS FAQ agent. The user just completed a 5-turn diagnostic and chose to ask questions instead of purchasing immediately.
+
+You have the FULL conversation history from the diagnostic. Use it.
+
+${isFirstFAQTurn ? `FIRST RESPONSE ONLY: Provide a concise, tailored overview of how lVl OS directly solves the specific pain points identified in the diagnostic conversation above. Reference their exact words. Then end with: "What else would you like to know before moving forward?"` : `Answer their question directly and concisely. 1-3 sentences. No fluff.`}
+
+Rules:
+1. You are answering pre-purchase questions. Be honest, direct, and clinical.
+2. If asked about pricing, say: "One flat subscription. One private instance. Your data, your server."
+3. If asked about competitors, say: "Most tools give you templates. lVl extracts YOUR procedures through conversation and turns them into documented systems."
+4. If asked about security, say: "Every customer gets their own isolated server. No shared database. No one else can access your data."
+5. If asked about setup time, say: "11 questions to calibrate. First SOP extracted in under 10 minutes."
+6. Always end with 3 relevant CHIPS addressing likely follow-up questions or objections.
+7. Do not be salesy. Be factual.` + OFF_TOPIC_GUARDRAIL;
+
+    const apiMessages: ChatMessage[] = [
+        { role: "system", content: systemPrompt },
+        ...messages.slice(-20), // Keep more history for FAQ — needs diagnostic context
+    ];
+
+    const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        max_tokens: 400,
         messages: apiMessages,
     });
 
@@ -393,8 +504,20 @@ export async function POST(req: NextRequest) {
         // When INSTANCE_MODE is gatekeeper, skip ALL tenant logic:
         // no constraints, no resolveMode, no Extract SOP triggers.
         if (INSTANCE_MODE === "gatekeeper") {
-            console.log("[lVl] Gatekeeper mode enforced. Bypassing tenant logic.");
-            return handleGatekeeper(messages);
+            const chatMode = body.chatMode || "diagnostic";
+            console.log(`[lVl] Gatekeeper mode enforced. chatMode: ${chatMode}`);
+
+            switch (chatMode) {
+                case "support":
+                    return handleSupport(messages);
+                case "enterprise":
+                    return handleEnterprise(messages);
+                case "faq":
+                    return handleFAQ(messages);
+                case "diagnostic":
+                default:
+                    return handleGatekeeper(messages);
+            }
         }
 
         const requestedMode = body.mode;
