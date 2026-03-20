@@ -116,6 +116,7 @@ async function injectTenantVariables(
 
     const vars: Record<string, string> = {
         INSTANCE_MODE: "tenant",
+        NEXT_PUBLIC_INSTANCE_MODE: "tenant",
         TENANT_TYPE: "b2b",
         OPENAI_API_KEY: tenantKey,
         DATA_DIR: "/app/data",
@@ -350,6 +351,51 @@ export async function POST(req: NextRequest) {
             console.error(`[lVl] PROVISIONING FAILED for ${customerEmail}: ${message}`);
             // NOTE: We still return 200 to Stripe — the payment succeeded.
             // Provisioning failure is an internal issue to resolve manually.
+        }
+    } else if (event.type === "customer.subscription.deleted") {
+        const subscription = event.data.object as Stripe.Subscription;
+        const customerId = subscription.customer as string;
+
+        try {
+            const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+            if (customer.deleted) throw new Error("Customer deleted in Stripe.");
+
+            const email = customer.email || "unknown";
+            const name = customer.name || "unknown";
+            const projectName = sanitizeProjectName(name, email);
+            console.log(`[lVl] CANCELLATION RECEIVED for ${email}`);
+
+            // Fetch all projects to find the matching ID
+            const res = await railwayQuery(`
+                query {
+                    projects {
+                        edges {
+                            node {
+                                id
+                                name
+                            }
+                        }
+                    }
+                }
+            `);
+
+            const projects = (res.data as any).projects.edges;
+            const targetProject = projects.find((p: any) => p.node.name === projectName);
+
+            if (targetProject) {
+                await railwayQuery(`
+                    mutation($id: String!) {
+                        projectDelete(id: $id)
+                    }
+                `, { id: targetProject.node.id });
+                console.log(`[lVl] Railway: Project teardown complete (${projectName})`);
+            } else {
+                console.log(`[lVl] Railway: Project ${projectName} not found for teardown.`);
+            }
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "Unknown error";
+            console.error(`[lVl] CANCELLATION TEARDOWN FAILED: ${message}`);
+            // Note: Still returns 200 so Stripe knows we received the event.
         }
     } else {
         console.log(`[lVl] Unhandled event type: ${event.type}. Ignoring.`);

@@ -221,10 +221,10 @@ export default function Home() {
   const showFrontDoor = chatMode === "select" && messages.length === 0;
 
   return (
-    <main className="flex flex-col h-full overflow-hidden bg-black">
+    <main className="relative flex flex-col h-full overflow-hidden bg-black">
       {/* Header */}
       <header className="px-6 py-4">
-        <h1 className="text-white text-sm tracking-widest">lVl</h1>
+        <h1 className="text-white text-2xl tracking-widest">lVl</h1>
       </header>
 
       {/* Messages */}
@@ -352,6 +352,18 @@ export default function Home() {
             autoFocus
           />
         </form>
+      )}
+
+      {/* Manage Link (Tenant Instances Only) */}
+      {process.env.NEXT_PUBLIC_INSTANCE_MODE === "tenant" && (
+        <a
+          href="https://billing.stripe.com/p/login/dRm28q74m0ar6OA9rZ7N600"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute bottom-4 right-6 bg-black pl-3 text-[#333333] text-[10px] uppercase tracking-widest hover:text-[#878681] transition-colors duration-300 z-50"
+        >
+          [Manage]
+        </a>
       )}
     </main>
   );
