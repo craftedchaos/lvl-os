@@ -233,6 +233,54 @@ async function provisionTenantInstance(customerName: string, customerEmail: stri
 }
 
 // ============================================================
+// EMAIL DELIVERY (Resend)
+// ============================================================
+
+async function sendDeploymentEmail(customerEmail: string, domain: string): Promise<void> {
+    const apiKey = process.env.RESEND_API_KEY;
+    const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+    if (!apiKey) throw new Error("RESEND_API_KEY is not set.");
+
+    const emailBody = [
+        "Your private instance of lVl OS has been provisioned.",
+        "",
+        "Access your workspace here:",
+        `https://${domain}`,
+        "",
+        "What happens next:",
+        "1. Open the link above.",
+        "2. The system will begin a short onboarding interview (11 questions).",
+        "3. Once complete, your operational workspace will be active.",
+        "",
+        "This instance is yours. Your data stays on your server.",
+        "No one else has access.",
+        "",
+        "— lVl",
+    ].join("\n");
+
+    const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+            from: fromEmail,
+            to: customerEmail,
+            subject: "Your lVl OS instance is live.",
+            text: emailBody,
+        }),
+    });
+
+    if (!res.ok) {
+        const errorBody = await res.text();
+        throw new Error(`Resend API ${res.status}: ${errorBody}`);
+    }
+
+    console.log(`[lVl] Deployment email sent to ${customerEmail}`);
+}
+
+// ============================================================
 // STRIPE WEBHOOK HANDLER
 // ============================================================
 
@@ -288,10 +336,15 @@ export async function POST(req: NextRequest) {
             const domain = await provisionTenantInstance(customerName, customerEmail);
             console.log(`[lVl] Tenant live at: https://${domain}`);
 
-            // -------------------------------------------------------
-            // PHASE 3 HOOK: Email delivery will go here.
-            // Send 'domain' and 'customerEmail' to email service.
-            // -------------------------------------------------------
+            // --- PHASE 3: Email Delivery ---
+            try {
+                await sendDeploymentEmail(customerEmail, domain);
+            } catch (emailErr) {
+                const emailMsg = emailErr instanceof Error ? emailErr.message : "Unknown error";
+                console.error(`[lVl] EMAIL FAILED for ${customerEmail}: ${emailMsg}`);
+                // Email failure does not block the webhook response.
+                // The tenant is live — customer URL can be sent manually if needed.
+            }
         } catch (err) {
             const message = err instanceof Error ? err.message : "Unknown error";
             console.error(`[lVl] PROVISIONING FAILED for ${customerEmail}: ${message}`);
