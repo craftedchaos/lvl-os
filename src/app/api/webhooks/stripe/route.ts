@@ -129,7 +129,7 @@ async function injectTenantVariables(
 }
 
 // --- Step 4: Create and mount a persistent volume ---
-// Consolidated: pass all bindings (project, environment, service, mountPath) in one call.
+// Schema-verified via introspection. Two-step: create, then explicitly bind.
 // Graceful fallback: if volume fails, provisioning continues without persistent storage.
 async function createVolume(
     projectId: string,
@@ -137,7 +137,8 @@ async function createVolume(
     environmentId: string
 ): Promise<string | null> {
     try {
-        const res = await railwayQuery(`
+        // Step 4a: Create volume (projectId + mountPath are required, serviceId + environmentId optional)
+        const createRes = await railwayQuery(`
             mutation($input: VolumeCreateInput!) {
                 volumeCreate(input: $input) {
                     id
@@ -146,18 +147,38 @@ async function createVolume(
         `, {
             input: {
                 projectId,
+                mountPath: "/app/data",
+                serviceId,
                 environmentId,
+            },
+        });
+
+        const volumeId = (createRes.data as any).volumeCreate.id;
+        console.log(`[lVl] Railway: Volume created — ${volumeId}`);
+
+        // Step 4b: Explicitly bind volume to service instance
+        // Schema: volumeId (top-level, required), environmentId (top-level, optional),
+        //         input: { serviceId, mountPath, state } (all optional)
+        await railwayQuery(`
+            mutation($volumeId: String!, $environmentId: String, $input: VolumeInstanceUpdateInput!) {
+                volumeInstanceUpdate(volumeId: $volumeId, environmentId: $environmentId, input: $input) {
+                    id
+                }
+            }
+        `, {
+            volumeId,
+            environmentId,
+            input: {
                 serviceId,
                 mountPath: "/app/data",
             },
         });
 
-        const volumeId = (res.data as any).volumeCreate.id;
-        console.log(`[lVl] Railway: Volume created and mounted — ${volumeId}`);
+        console.log("[lVl] Railway: Volume bound to service at /app/data");
         return volumeId;
     } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
-        console.error(`[lVl] Railway: Volume creation failed (non-fatal): ${message}`);
+        console.error(`[lVl] Railway: Volume creation/binding failed (non-fatal): ${message}`);
         console.log("[lVl] Railway: Proceeding without persistent volume. Data will not survive redeploys.");
         return null;
     }
@@ -184,23 +205,25 @@ async function createDomain(
 }
 
 // --- Sanitize customer name for project naming ---
-function sanitizeProjectName(name: string, email: string): string {
+function sanitizeProjectName(name: string, email: string, sessionId: string): string {
     // Try name first, fall back to email prefix
     const raw = name !== "unknown" ? name : email.split("@")[0];
-    return "lvl-" + raw
+    const suffix = sessionId.slice(-4); // last 4 chars of Stripe session ID
+    const base = raw
         .toLowerCase()
-        .replace(/[^a-z0-9]/g, "-")   // replace non-alphanumeric with dashes
-        .replace(/-+/g, "-")           // collapse multiple dashes
-        .replace(/^-|-$/g, "")         // trim leading/trailing dashes
-        .slice(0, 30);                 // Railway project name length limit
+        .replace(/[^a-z0-9]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 25);                 // shortened to leave room for suffix
+    return `lvl-${base}-${suffix}`;
 }
 
 // ============================================================
 // FULL PROVISIONING PIPELINE
 // ============================================================
 
-async function provisionTenantInstance(customerName: string, customerEmail: string): Promise<string> {
-    const projectName = sanitizeProjectName(customerName, customerEmail);
+async function provisionTenantInstance(customerName: string, customerEmail: string, sessionId: string): Promise<string> {
+    const projectName = sanitizeProjectName(customerName, customerEmail, sessionId);
     console.log(`[lVl] Provisioning tenant: ${projectName} for ${customerEmail}`);
 
     // Step 1: Create project
@@ -329,7 +352,7 @@ export async function POST(req: NextRequest) {
 
         // --- PHASE 2: Railway Provisioning ---
         try {
-            const domain = await provisionTenantInstance(customerName, customerEmail);
+            const domain = await provisionTenantInstance(customerName, customerEmail, sessionId);
             console.log(`[lVl] Tenant live at: https://${domain}`);
 
             // --- PHASE 3: Email Delivery ---
@@ -357,8 +380,15 @@ export async function POST(req: NextRequest) {
 
             const email = customer.email || "unknown";
             const name = customer.name || "unknown";
-            const projectName = sanitizeProjectName(name, email);
-            console.log(`[lVl] CANCELLATION RECEIVED for ${email}`);
+            // Build the project name prefix (without session suffix) for prefix matching
+            const rawName = name !== "unknown" ? name : email.split("@")[0];
+            const namePrefix = "lvl-" + rawName
+                .toLowerCase()
+                .replace(/[^a-z0-9]/g, "-")
+                .replace(/-+/g, "-")
+                .replace(/^-|-$/g, "")
+                .slice(0, 25);
+            console.log(`[lVl] CANCELLATION RECEIVED for ${email} (searching for projects starting with: ${namePrefix})`);
 
             // Fetch all projects to find the matching ID
             const res = await railwayQuery(`
@@ -375,7 +405,7 @@ export async function POST(req: NextRequest) {
             `);
 
             const projects = (res.data as any).projects.edges;
-            const targetProject = projects.find((p: any) => p.node.name === projectName);
+            const targetProject = projects.find((p: any) => p.node.name.startsWith(namePrefix));
 
             if (targetProject) {
                 await railwayQuery(`
@@ -383,9 +413,9 @@ export async function POST(req: NextRequest) {
                         projectDelete(id: $id)
                     }
                 `, { id: targetProject.node.id });
-                console.log(`[lVl] Railway: Project teardown complete (${projectName})`);
+                console.log(`[lVl] Railway: Project teardown complete (${targetProject.node.name})`);
             } else {
-                console.log(`[lVl] Railway: Project ${projectName} not found for teardown.`);
+                console.log(`[lVl] Railway: No project matching prefix ${namePrefix} found for teardown.`);
             }
         } catch (err) {
             const message = err instanceof Error ? err.message : "Unknown error";
