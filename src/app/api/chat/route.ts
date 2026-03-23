@@ -72,19 +72,36 @@ function detectExtractSOPTrigger(messages: ChatMessage[]): string | null {
 // GATEKEEPER MODE (Vercel — public sales bot)
 // ============================================================
 
-function buildTerminalPitch(): NextResponse {
-    const pitch = [
-        "Diagnosis complete.",
-        "",
-        "Your operation is running on memory, not infrastructure. The procedures exist — but only in your head. When you leave the room, the system degrades.",
-        "",
-        "lVl OS extracts those procedures through guided conversation and turns them into documented, constraint-driven systems your team can actually follow.",
-        "",
-        "**To translate this diagnosis into an executable system, deploy your private instance below.**",
-    ].join("\n");
+async function buildTerminalPitch(messages: ChatMessage[]): Promise<NextResponse> {
+    const pitchPrompt = `You are the lVl OS diagnostic closer. The user just completed a 4-turn diagnostic. You have the FULL conversation history below.
+
+Your task: Write exactly 3 short paragraphs (2-3 sentences each) that synthesize the user's specific pain points into a clinical closing diagnosis.
+
+RULES:
+1. Paragraph 1: State the core diagnosis. Mirror their exact language back to them. Name the pattern you identified.
+2. Paragraph 2: Explain what lVl OS does — it extracts procedures through guided conversation and turns them into documented, constraint-driven systems.
+3. Paragraph 3: Exactly this line: "**To translate this diagnosis into an executable system, deploy your private instance below.**"
+
+CRITICAL ADAPTATION:
+- If the diagnostic was about a BUSINESS OPERATION, use words like "operation," "team," "procedures," "staff."
+- If the diagnostic was about a PERSONAL FRAMEWORK, use words like "system," "routine," "framework," "habits," "accountability." Do NOT say "team" or "operation."
+- If it was BOTH, blend the language naturally.
+
+Start with "Diagnosis complete." on its own line. Be clinical. No warmth. No sales language. Just the mirror.`;
+
+    const apiMessages: ChatMessage[] = [
+        { role: "system", content: pitchPrompt },
+        ...messages.slice(-10),
+    ];
+
+    const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        max_tokens: 300,
+        messages: apiMessages,
+    });
 
     return NextResponse.json({
-        message: pitch,
+        message: completion.choices[0]?.message?.content || "Diagnosis complete.\n\nlVl OS extracts your procedures through guided conversation and turns them into documented, constraint-driven systems.\n\n**To translate this diagnosis into an executable system, deploy your private instance below.**",
         turnCount: 5,
         terminated: true,
         mode: "gatekeeper" as AppMode,
@@ -95,7 +112,7 @@ async function handleGatekeeper(messages: ChatMessage[]) {
     const userTurnCount = messages.filter((m) => m.role === "user").length;
 
     if (userTurnCount >= 5) {
-        return buildTerminalPitch();
+        return buildTerminalPitch(messages);
     }
 
     // Inject turn count so the AI knows when to deliver final diagnosis
@@ -226,17 +243,12 @@ Then provide a synthesized example: "A Restaurant Operations Manager reduced dec
 === RULES ===
 
 1. You are answering pre-purchase questions. Be honest, direct, and clinical.
-2. If asked about pricing, say: "One flat subscription. One private instance. Your data, your server."
+2. If asked about pricing, say: "lVl OS is currently in its Founding Cohort phase. The price is $24.99/mo for the first 50 users — that covers raw server and API costs — in exchange for early feedback. The public price will eventually be $129/mo as lVl expands its suite of tools to democratize access to high-end consulting."
 3. If asked about competitors, say: "Most tools give you templates. lVl extracts YOUR procedures through conversation and turns them into documented systems."
 4. If asked about security, say: "Every customer gets their own isolated server. No shared database. No one else can access your data."
 5. If asked about setup time, say: "11 questions to calibrate. First SOP extracted in under 10 minutes."
 6. Do not be salesy. Be factual.
-
-=== THE PERSISTENT CLOSER (UNBREAKABLE RULE) ===
-
-In EVERY SINGLE RESPONSE during FAQ mode, you MUST include a Quick Chip labeled exactly [Start using lVl now] as one of your CHIPS. This is non-negotiable. It must appear in every response alongside 2 other relevant chips.
-
-Format: CHIPS: [Start using lVl now] | [Relevant Question 1] | [Relevant Question 2]` + OFF_TOPIC_GUARDRAIL;
+7. Always end with 3 relevant CHIPS addressing likely follow-up questions or objections. Do NOT include a 'Start using lVl now' chip — that is handled by the system automatically.` + OFF_TOPIC_GUARDRAIL;
 
     const apiMessages: ChatMessage[] = [
         { role: "system", content: systemPrompt },
@@ -249,8 +261,22 @@ Format: CHIPS: [Start using lVl now] | [Relevant Question 1] | [Relevant Questio
         messages: apiMessages,
     });
 
+    // Hardcode the persistent closer chip into every FAQ response
+    let responseMessage = completion.choices[0]?.message?.content || "...";
+    // Append [Start using lVl now] chip if not already present
+    if (responseMessage.includes("CHIPS:")) {
+        // Insert our chip at the beginning of the existing CHIPS line
+        responseMessage = responseMessage.replace(
+            /CHIPS:\s*/,
+            "CHIPS: [Start using lVl now] | "
+        );
+    } else {
+        // No CHIPS line at all — append one
+        responseMessage += "\n\nCHIPS: [Start using lVl now] | [How does it work?] | [What does it cost?]";
+    }
+
     return NextResponse.json({
-        message: completion.choices[0]?.message?.content || "...",
+        message: responseMessage,
         turnCount: userTurnCount,
         terminated: false,
         mode: "gatekeeper" as AppMode,
