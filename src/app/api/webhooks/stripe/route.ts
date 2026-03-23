@@ -129,43 +129,38 @@ async function injectTenantVariables(
 }
 
 // --- Step 4: Create and mount a persistent volume ---
+// Consolidated: pass all bindings (project, environment, service, mountPath) in one call.
+// Graceful fallback: if volume fails, provisioning continues without persistent storage.
 async function createVolume(
     projectId: string,
     serviceId: string,
     environmentId: string
-): Promise<string> {
-    const res = await railwayQuery(`
-        mutation($input: VolumeCreateInput!) {
-            volumeCreate(input: $input) {
-                id
+): Promise<string | null> {
+    try {
+        const res = await railwayQuery(`
+            mutation($input: VolumeCreateInput!) {
+                volumeCreate(input: $input) {
+                    id
+                }
             }
-        }
-    `, {
-        input: {
-            projectId,
-            mountPath: "/app/data",
-        },
-    });
+        `, {
+            input: {
+                projectId,
+                environmentId,
+                serviceId,
+                mountPath: "/app/data",
+            },
+        });
 
-    const volumeId = (res.data as any).volumeCreate.id;
-    console.log(`[lVl] Railway: Volume created — ${volumeId}`);
-
-    // Mount the volume to the service instance
-    await railwayQuery(`
-        mutation($volumeId: String!, $input: VolumeInstanceUpdateInput!) {
-            volumeInstanceUpdate(volumeId: $volumeId, input: $input)
-        }
-    `, {
-        volumeId: volumeId,
-        input: {
-            serviceId,
-            environmentId,
-            mountPath: "/app/data",
-        },
-    });
-    console.log("[lVl] Railway: Volume mounted at /app/data");
-
-    return volumeId;
+        const volumeId = (res.data as any).volumeCreate.id;
+        console.log(`[lVl] Railway: Volume created and mounted — ${volumeId}`);
+        return volumeId;
+    } catch (err) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        console.error(`[lVl] Railway: Volume creation failed (non-fatal): ${message}`);
+        console.log("[lVl] Railway: Proceeding without persistent volume. Data will not survive redeploys.");
+        return null;
+    }
 }
 
 // --- Step 5: Generate a Railway domain ---
