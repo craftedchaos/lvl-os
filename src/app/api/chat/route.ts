@@ -13,7 +13,7 @@ import {
     getMostRecentSOP,
 } from "@/lib/storage";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "dummy-key-for-build" });
 const INSTANCE_MODE = process.env.INSTANCE_MODE || "gatekeeper";
 
 // --- Rate Limiter (protects Gatekeeper on public Vercel) ---
@@ -110,6 +110,25 @@ Start with "Diagnosis complete." on its own line. Be clinical. No warmth. No sal
 
 async function handleGatekeeper(messages: ChatMessage[]) {
     const userTurnCount = messages.filter((m) => m.role === "user").length;
+
+    // --- FAST LANE: High buying intent override ---
+    // If user explicitly asks to pay at any turn, skip straight to Turn 5 pitch
+    const lastUserMsg = messages.filter((m) => m.role === "user").pop();
+    if (lastUserMsg) {
+        const intent = lastUserMsg.content.toLowerCase();
+        const buySignals = [
+            "take my money", "where do i pay", "sign up", "ready to buy",
+            "payment link", "shut up and take", "how do i start",
+            "i want to start", "let me pay", "give me the link",
+            "i'm ready", "im ready", "i'm sold", "im sold",
+            "how much", "what does it cost", "pricing", "subscribe",
+            "start using lvl", "deploy my", "get started",
+        ];
+        if (buySignals.some((signal) => intent.includes(signal))) {
+            console.log(`[lVl] FAST LANE triggered at turn ${userTurnCount}: "${lastUserMsg.content}"`);
+            return buildTerminalPitch(messages);
+        }
+    }
 
     if (userTurnCount >= 5) {
         return buildTerminalPitch(messages);
