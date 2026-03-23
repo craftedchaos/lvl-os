@@ -184,6 +184,10 @@ export default function Home() {
   function handleChipClick(chip: string) {
     if (chip === "Skip ->") {
       sendMessage("Skip");
+    } else if (chip === "Start using lVl now") {
+      // Persistent closer chip — opens Stripe payment link
+      const stripeLink = process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK || "#";
+      window.open(stripeLink, "_blank", "noopener,noreferrer");
     } else {
       sendMessage(chip);
     }
@@ -194,7 +198,7 @@ export default function Home() {
     setChatMode(selectedMode);
     // Auto-send an opening message to kick off the selected mode
     if (selectedMode === "diagnostic") {
-      sendMessage("Diagnose my operation", selectedMode);
+      sendMessage("Turn ideas into systems", selectedMode);
     } else if (selectedMode === "support") {
       sendMessage("Support & Feedback", selectedMode);
     } else if (selectedMode === "enterprise") {
@@ -284,7 +288,7 @@ export default function Home() {
             onClick={() => handleModeSelect("diagnostic")}
             className="text-[#878681] text-sm hover:text-white transition-colors duration-150 cursor-pointer"
           >
-            [Diagnose my operation]
+            [Turn ideas into systems]
           </button>
           <button
             onClick={() => handleModeSelect("support")}
