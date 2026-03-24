@@ -39,14 +39,27 @@ export default function Home() {
   const [mode, setMode] = useState<AppMode | undefined>(undefined);
   const [activeSOP, setActiveSOP] = useState<string | null>(null);
   const [chatMode, setChatMode] = useState<ChatMode>("select");
+  const [initialized, setInitialized] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const isTenant = process.env.NEXT_PUBLIC_INSTANCE_MODE === "tenant";
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Premium auto-start: tenant instances bypass the front door entirely
+  useEffect(() => {
+    if (isTenant && !initialized) {
+      setInitialized(true);
+      setChatMode("diagnostic"); // Skip the select screen
+      sendMessage("_init_");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function sendMessage(text: string, overrideChatMode?: ChatMode) {
-    if (!text.trim() || loading) return;
+    if ((!text.trim() && text !== "_init_") || loading) return;
     // Allow sending in terminated state only during FAQ pivot
     if (terminated && overrideChatMode !== "faq") return;
 
@@ -226,7 +239,7 @@ export default function Home() {
       : [];
 
   // --- Front Door State: no mode selected yet ---
-  const showFrontDoor = chatMode === "select" && messages.length === 0;
+  const showFrontDoor = !isTenant && chatMode === "select" && messages.length === 0;
 
   return (
     <main className="relative flex flex-col h-full overflow-hidden bg-black">
@@ -264,6 +277,8 @@ export default function Home() {
           }
 
           if (msg.role === "user") {
+            // Filter invisible init trigger from chat render
+            if (msg.content === "_init_") return null;
             return (
               <p key={i} className="text-white text-sm">
                 {msg.content}

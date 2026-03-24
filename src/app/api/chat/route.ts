@@ -347,22 +347,26 @@ function extractConstraintsDocument(text: string): {
 
 async function handleContextBuilder(messages: ChatMessage[]) {
     const basePrompt = getContextBuilderPrompt();
-    const userTurnCount = messages.filter((m) => m.role === "user").length;
 
-    // Dynamic turn-awareness: prevent Q1 loop
+    // Strip invisible routing commands — these are UI triggers, not user input
+    const ROUTING_COMMANDS = new Set(["_init_", "Turn ideas into systems", "Support & Feedback", "Enterprise Inquiry"]);
+    const cleanMessages = messages.filter((m) => !(m.role === "user" && ROUTING_COMMANDS.has(m.content)));
+    const userTurnCount = cleanMessages.filter((m) => m.role === "user").length;
+
+    // Dynamic turn-awareness: prevent Q1 loop + reinforce CHIPS formatting
     let turnDirective: string;
     if (userTurnCount === 0) {
-        turnDirective = "\n\n[SYSTEM: Begin with Q1 immediately. No preamble.]";
+        turnDirective = "\n\n[SYSTEM: Begin with Step 1 immediately. No preamble. Adapt your phrasing to feel natural. End with dynamic CHIPS.]";
     } else {
-        turnDirective = `\n\n[SYSTEM OVERRIDE: The user has provided an answer. This is response ${userTurnCount} in the sequence. Evaluate the conversation history and ask the next logical question in the 11-question sequence. DO NOT repeat previous questions.]`;
+        turnDirective = `\n\n[SYSTEM OVERRIDE: The user has answered. This is Step ${userTurnCount + 1} of 11. Evaluate the FULL conversation history. Ask the next thematic question in the sequence — adapt your phrasing to the user's established context. Do NOT repeat previous questions. YOU MUST conclude your response with 2-3 dynamic quick-reply options formatted exactly as: CHIPS: [Option 1] | [Option 2] | [Skip ->]]`;
     }
 
     const systemPrompt = basePrompt + turnDirective;
 
-    // Full history — no slicing. The 11-question calibration requires complete context.
+    // Full history (cleaned) — no slicing. The 11-question calibration requires complete context.
     const apiMessages: ChatMessage[] = [
         { role: "system", content: systemPrompt },
-        ...messages,
+        ...cleanMessages,
     ];
 
     const completion = await openai.chat.completions.create({
