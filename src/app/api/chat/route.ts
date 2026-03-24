@@ -82,16 +82,23 @@ PART 1 — THE DIAGNOSIS (3 short paragraphs):
 2. Paragraph 2: Explain what lVl OS does — it extracts procedures through guided conversation and turns them into documented, constraint-driven systems.
 3. Paragraph 3: Transition line: "Here is what your first extracted system would look like:"
 
-PART 2 — THE PREVIEW SYSTEM (Sample 3-Step SOP):
-Based STRICTLY on what the user revealed in the conversation, generate a highly specific, actionable 3-step SOP. This is a proof-of-concept — show the user that lVl already understands their problem well enough to start building.
+PART 2 — THE PREVIEW SYSTEM (Operational Document):
+Based STRICTLY on what the user revealed in the conversation, generate a highly specific, professional operational document. This is a proof-of-concept — show the user that lVl already understands their problem well enough to start building.
 
-Format the SOP exactly like this:
+Format the document exactly like this:
 ---
 **SOP Preview: [Specific Task Name Based on Their Pain Point]**
 
-**Step 1:** [Concrete, actionable instruction]
-**Step 2:** [Concrete, actionable instruction]
-**Step 3:** [Concrete, actionable instruction]
+**Objective:** [One clear sentence defining the goal of this system]
+
+**Known Blockers:** [2-3 bullet points listing the specific friction points the user revealed in the chat]
+
+**Operating Constraints:** [2-3 bullet points defining the hard rules required to make this work — things that must always be true]
+
+**Execution Protocol:**
+1. [Concrete, actionable directive — not a suggestion, a command]
+2. [Concrete, actionable directive]
+3. [Concrete, actionable directive]
 ---
 
 Then end with exactly this line on its own:
@@ -102,7 +109,7 @@ CRITICAL ADAPTATION:
 - If the diagnostic was about a PERSONAL FRAMEWORK, use words like "system," "routine," "framework," "habits," "accountability." Do NOT say "team" or "operation."
 - If it was BOTH, blend the language naturally.
 
-Start with "Diagnosis complete." on its own line. Be clinical. No warmth. No sales language. The SOP must be specific enough to feel custom-built, not generic.`;
+Start with "Diagnosis complete." on its own line. Be clinical. No warmth. No sales language. The document must be specific enough to feel custom-built, not generic.`;
 
     const apiMessages: ChatMessage[] = [
         { role: "system", content: pitchPrompt },
@@ -111,7 +118,7 @@ Start with "Diagnosis complete." on its own line. Be clinical. No warmth. No sal
 
     const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        max_tokens: 600,
+        max_tokens: 800,
         messages: apiMessages,
     });
 

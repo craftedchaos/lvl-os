@@ -255,27 +255,47 @@ async function provisionTenantInstance(customerName: string, customerEmail: stri
 // EMAIL DELIVERY (Resend)
 // ============================================================
 
-async function sendDeploymentEmail(customerEmail: string, domain: string): Promise<void> {
+async function sendDeploymentEmail(customerEmail: string, customerName: string, domain: string): Promise<void> {
     const apiKey = process.env.RESEND_API_KEY;
     const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
     if (!apiKey) throw new Error("RESEND_API_KEY is not set.");
 
-    const emailBody = [
-        "Your private instance of lVl OS has been provisioned.",
-        "",
-        "Access your workspace here:",
-        `https://${domain}`,
-        "",
-        "What happens next:",
-        "1. Open the link above.",
-        "2. The system will begin a short onboarding interview (11 questions).",
-        "3. Once complete, your operational workspace will be active.",
-        "",
-        "This instance is yours. Your data stays on your server.",
-        "No one else has access.",
-        "",
-        "— lVl",
-    ].join("\n");
+    const emailBody = `<p>${customerName},</p>
+
+<p>your lVl workspace is set up and ready.<br>
+this is where you take what's in your head<br>
+and turn it into something you can actually use.</p>
+
+<p><strong>start here</strong><br>
+open your workspace:<br>
+<a href="https://${domain}">https://${domain}</a><br>
+bookmark it. you'll come back to it.</p>
+
+<p><strong>what to expect</strong><br>
+when you enter, you'll be guided through a short set of questions.<br>
+take your time with it.<br>
+the more specific you are about what's not working,<br>
+the more useful the output will be.</p>
+
+<p><strong>how to use it</strong><br>
+if things feel messy, just start writing.<br>
+it will help you sort it.<br>
+if something feels too generic, say so.<br>
+add detail. tighten it.<br>
+you don't need to "use it correctly."<br>
+you just need to start.</p>
+
+<p><strong>if you get stuck</strong><br>
+refresh the page<br>
+or just ask it where to go next<br>
+you won't lose your work.</p>
+
+<p><strong>one thing to keep in mind</strong><br>
+this is a tool for thinking and structuring.<br>
+read through anything it generates before using it in the real world.<br>
+use your judgment.</p>
+
+<p>lVl s p a c e to begin —|••</p>`;
 
     const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -287,7 +307,7 @@ async function sendDeploymentEmail(customerEmail: string, domain: string): Promi
             from: fromEmail,
             to: customerEmail,
             subject: "Your lVl OS instance is live.",
-            text: emailBody,
+            html: emailBody,
         }),
     });
 
@@ -357,7 +377,7 @@ export async function POST(req: NextRequest) {
 
             // --- PHASE 3: Email Delivery ---
             try {
-                await sendDeploymentEmail(customerEmail, domain);
+                await sendDeploymentEmail(customerEmail, customerName || "Builder", domain);
             } catch (emailErr) {
                 const emailMsg = emailErr instanceof Error ? emailErr.message : "Unknown error";
                 console.error(`[lVl] EMAIL FAILED for ${customerEmail}: ${emailMsg}`);
