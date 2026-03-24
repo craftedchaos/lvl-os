@@ -75,19 +75,34 @@ function detectExtractSOPTrigger(messages: ChatMessage[]): string | null {
 async function buildTerminalPitch(messages: ChatMessage[]): Promise<NextResponse> {
     const pitchPrompt = `You are the lVl OS diagnostic closer. The user just completed a 4-turn diagnostic. You have the FULL conversation history below.
 
-Your task: Write exactly 3 short paragraphs (2-3 sentences each) that synthesize the user's specific pain points into a clinical closing diagnosis.
+Your task has TWO parts:
 
-RULES:
+PART 1 — THE DIAGNOSIS (3 short paragraphs):
 1. Paragraph 1: State the core diagnosis. Mirror their exact language back to them. Name the pattern you identified.
 2. Paragraph 2: Explain what lVl OS does — it extracts procedures through guided conversation and turns them into documented, constraint-driven systems.
-3. Paragraph 3: Exactly this line: "**To translate this diagnosis into an executable system, deploy your private instance below.**"
+3. Paragraph 3: Transition line: "Here is what your first extracted system would look like:"
+
+PART 2 — THE PREVIEW SYSTEM (Sample 3-Step SOP):
+Based STRICTLY on what the user revealed in the conversation, generate a highly specific, actionable 3-step SOP. This is a proof-of-concept — show the user that lVl already understands their problem well enough to start building.
+
+Format the SOP exactly like this:
+---
+**SOP Preview: [Specific Task Name Based on Their Pain Point]**
+
+**Step 1:** [Concrete, actionable instruction]
+**Step 2:** [Concrete, actionable instruction]
+**Step 3:** [Concrete, actionable instruction]
+---
+
+Then end with exactly this line on its own:
+"**This is one system. lVl OS extracts dozens. Deploy your private instance below to start building.**"
 
 CRITICAL ADAPTATION:
 - If the diagnostic was about a BUSINESS OPERATION, use words like "operation," "team," "procedures," "staff."
 - If the diagnostic was about a PERSONAL FRAMEWORK, use words like "system," "routine," "framework," "habits," "accountability." Do NOT say "team" or "operation."
 - If it was BOTH, blend the language naturally.
 
-Start with "Diagnosis complete." on its own line. Be clinical. No warmth. No sales language. Just the mirror.`;
+Start with "Diagnosis complete." on its own line. Be clinical. No warmth. No sales language. The SOP must be specific enough to feel custom-built, not generic.`;
 
     const apiMessages: ChatMessage[] = [
         { role: "system", content: pitchPrompt },
@@ -96,7 +111,7 @@ Start with "Diagnosis complete." on its own line. Be clinical. No warmth. No sal
 
     const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        max_tokens: 300,
+        max_tokens: 600,
         messages: apiMessages,
     });
 

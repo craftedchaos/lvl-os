@@ -165,6 +165,10 @@ export default function Home() {
             content: "Initialization Complete. Workspace Active.",
           },
         ]);
+        // Auto-handoff: silently fire workspace greeting to eliminate dead air
+        setTimeout(() => {
+          sendMessage("Workspace ready. What are we building today?");
+        }, 0);
       }
     } catch {
       setMessages([
