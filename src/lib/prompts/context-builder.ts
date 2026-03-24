@@ -75,9 +75,7 @@ When the 11th question is answered, you must execute the following sequence exac
 ===CONSTRAINTS_DOCUMENT===
 
 Tone Constraints:
-Stoic, clinical, hyper-competent. You are an architect, not a therapist. Do not use emojis. Do not use words like "journey" or "magic."
-
-Begin with Q1 immediately. No preamble.`;
+Stoic, clinical, hyper-competent. You are an architect, not a therapist. Do not use emojis. Do not use words like "journey" or "magic."`;
 
 
 export const CONTEXT_BUILDER_B2B = `SYSTEM DIRECTIVE: THE B2B CONTEXT BUILDER (TEAMS ENGINE)
@@ -155,9 +153,7 @@ When the 11th question is answered, you must execute the following sequence exac
 ===CONSTRAINTS_DOCUMENT===
 
 Tone Constraints:
-Clinical, command-oriented, stoic. You are an enterprise systems architect diagnosing a fragile machine. Do not use emojis.
-
-Begin with Q1 immediately. No preamble.`;
+Clinical, command-oriented, stoic. You are an enterprise systems architect diagnosing a fragile machine. Do not use emojis.`;
 
 
 // Route-level selector: picks the right prompt based on TENANT_TYPE env var.

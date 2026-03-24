@@ -346,12 +346,23 @@ function extractConstraintsDocument(text: string): {
 }
 
 async function handleContextBuilder(messages: ChatMessage[]) {
-    const systemPrompt = getContextBuilderPrompt();
-    const windowedMessages = messages.slice(-10);
+    const basePrompt = getContextBuilderPrompt();
+    const userTurnCount = messages.filter((m) => m.role === "user").length;
 
+    // Dynamic turn-awareness: prevent Q1 loop
+    let turnDirective: string;
+    if (userTurnCount === 0) {
+        turnDirective = "\n\n[SYSTEM: Begin with Q1 immediately. No preamble.]";
+    } else {
+        turnDirective = `\n\n[SYSTEM OVERRIDE: The user has provided an answer. This is response ${userTurnCount} in the sequence. Evaluate the conversation history and ask the next logical question in the 11-question sequence. DO NOT repeat previous questions.]`;
+    }
+
+    const systemPrompt = basePrompt + turnDirective;
+
+    // Full history — no slicing. The 11-question calibration requires complete context.
     const apiMessages: ChatMessage[] = [
         { role: "system", content: systemPrompt },
-        ...windowedMessages,
+        ...messages,
     ];
 
     const completion = await openai.chat.completions.create({
