@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { GATEKEEPER_PROMPT } from "@/lib/prompts/gatekeeper";
 import { getContextBuilderPrompt } from "@/lib/prompts/context-builder";
-import { SOP_REFINERY_PROMPT } from "@/lib/prompts/sop-refinery";
+import { getSOPRefineryPrompt } from "@/lib/prompts/sop-refinery";
 import { HORIZONTAL_PROMPT } from "@/lib/prompts/horizontal";
 import {
     saveConstraintsDocument,
@@ -358,7 +358,7 @@ async function handleContextBuilder(messages: ChatMessage[]) {
     if (userTurnCount === 0) {
         turnDirective = "\n\n[SYSTEM: Begin with Step 1 immediately. No preamble. Adapt your phrasing to feel natural. End with dynamic CHIPS.]";
     } else {
-        turnDirective = `\n\n[SYSTEM OVERRIDE: The user has answered. This is Step ${userTurnCount + 1} of 11. Evaluate the FULL conversation history. Ask the next thematic question in the sequence — adapt your phrasing to the user's established context. Do NOT repeat previous questions. YOU MUST conclude your response with 2-3 dynamic quick-reply options formatted exactly as: CHIPS: [Option 1] | [Option 2] | [Skip ->]]`;
+        turnDirective = `\n\n[SYSTEM OVERRIDE: The user has answered. This is turn ${userTurnCount + 1} of the calibration sequence. Evaluate the FULL conversation history. Ask the next thematic question in the sequence — adapt your phrasing to the user's established context. Do NOT repeat previous questions. If this is a Voss Checkpoint turn (after Step 4 or Step 8), provide ONLY the synthesis — do NOT ask the next question. YOU MUST conclude your response with CHIPS.]`;
     }
 
     const systemPrompt = basePrompt + turnDirective;
@@ -432,7 +432,8 @@ async function handleSOPRefinery(
     constraints: string,
     taskNameContext?: string
 ) {
-    let systemPrompt = SOP_REFINERY_PROMPT.replace("{CONSTRAINTS}", constraints);
+    let systemPrompt = getSOPRefineryPrompt();
+    systemPrompt = systemPrompt.replace("{CONSTRAINTS}", constraints);
 
     // --- "Extract SOP:" trigger: inject task name context and skip S1 ---
     // If the user triggered extraction from Horizontal Mode via a dynamic chip,
@@ -460,11 +461,14 @@ async function handleSOPRefinery(
 
     const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        max_tokens: 2000,
+        max_tokens: 4000,
         messages: apiMessages,
     });
 
-    const rawResponse = completion.choices[0]?.message?.content || "...";
+    const rawResponse = (completion.choices[0]?.message?.content || "")
+        .replace(/<state>[\s\S]*?<\/state>\n*/g, "")
+        .trim() || "...";
+
     const { cleanText, document, sopName } = extractSOPDocument(rawResponse);
 
     let savedSOPName: string | null = null;
