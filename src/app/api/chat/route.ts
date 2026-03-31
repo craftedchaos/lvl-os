@@ -257,8 +257,26 @@ async function handleGatekeeper(messages: ChatMessage[]) {
         messages: apiMessages,
     });
 
+    const rawText = completion.choices[0]?.message?.content || "...";
+
+    // --- Chip Extraction: strip "CHIPS: [X] | [Y] | [Z]" from raw text ---
+    let cleanMessage = rawText;
+    let chips: string[] = [];
+
+    const chipMatch = rawText.match(/CHIPS:\s*(.+)$/im);
+    if (chipMatch) {
+        // Remove the entire CHIPS line from the display text
+        cleanMessage = rawText.replace(/\n*CHIPS:\s*.+$/im, "").trim();
+        // Extract individual chip values: split on | and strip brackets/whitespace
+        chips = chipMatch[1]
+            .split("|")
+            .map((c) => c.trim().replace(/^\[|\]$/g, ""))
+            .filter((c) => c.length > 0);
+    }
+
     return NextResponse.json({
-        message: completion.choices[0]?.message?.content || "...",
+        message: cleanMessage,
+        chips,
         turnCount: userTurnCount,
         terminated: false,
         mode: "gatekeeper" as AppMode,
@@ -292,8 +310,18 @@ Rules:
         messages: apiMessages,
     });
 
+    const rawText = completion.choices[0]?.message?.content || "...";
+    let cleanMessage = rawText;
+    let chips: string[] = [];
+    const chipMatch = rawText.match(/CHIPS:\s*(.+)$/im);
+    if (chipMatch) {
+        cleanMessage = rawText.replace(/\n*CHIPS:\s*.+$/im, "").trim();
+        chips = chipMatch[1].split("|").map((c) => c.trim().replace(/^\[|\]$/g, "")).filter((c) => c.length > 0);
+    }
+
     return NextResponse.json({
-        message: completion.choices[0]?.message?.content || "...",
+        message: cleanMessage,
+        chips,
         turnCount: messages.filter((m) => m.role === "user").length,
         terminated: false,
         mode: "gatekeeper" as AppMode,
@@ -325,8 +353,18 @@ Rules:
         messages: apiMessages,
     });
 
+    const rawText = completion.choices[0]?.message?.content || "...";
+    let cleanMessage = rawText;
+    let chips: string[] = [];
+    const chipMatch = rawText.match(/CHIPS:\s*(.+)$/im);
+    if (chipMatch) {
+        cleanMessage = rawText.replace(/\n*CHIPS:\s*.+$/im, "").trim();
+        chips = chipMatch[1].split("|").map((c) => c.trim().replace(/^\[|\]$/g, "")).filter((c) => c.length > 0);
+    }
+
     return NextResponse.json({
-        message: completion.choices[0]?.message?.content || "...",
+        message: cleanMessage,
+        chips,
         turnCount: messages.filter((m) => m.role === "user").length,
         terminated: false,
         mode: "gatekeeper" as AppMode,
@@ -387,22 +425,27 @@ Then provide a synthesized example: "A Restaurant Operations Manager reduced dec
         messages: apiMessages,
     });
 
+    const rawText = completion.choices[0]?.message?.content || "...";
+    let cleanMessage = rawText;
+    let chips: string[] = [];
+    const chipMatch = rawText.match(/CHIPS:\s*(.+)$/im);
+    if (chipMatch) {
+        cleanMessage = rawText.replace(/\n*CHIPS:\s*.+$/im, "").trim();
+        chips = chipMatch[1].split("|").map((c) => c.trim().replace(/^\[|\]$/g, "")).filter((c) => c.length > 0);
+    }
+
     // Hardcode the persistent closer chip into every FAQ response
-    let responseMessage = completion.choices[0]?.message?.content || "...";
-    // Append [Start using lVl now] chip if not already present
-    if (responseMessage.includes("CHIPS:")) {
-        // Insert our chip at the beginning of the existing CHIPS line
-        responseMessage = responseMessage.replace(
-            /CHIPS:\s*/,
-            "CHIPS: [Start using lVl now] | "
-        );
-    } else {
-        // No CHIPS line at all — append one
-        responseMessage += "\n\nCHIPS: [Start using lVl now] | [How does it work?] | [What does it cost?]";
+    if (!chips.includes("Start using lVl now")) {
+        chips.unshift("Start using lVl now");
+    }
+    // Fallback if AI produced no chips at all
+    if (chips.length <= 1) {
+        chips = ["Start using lVl now", "How does it work?", "What does it cost?"];
     }
 
     return NextResponse.json({
-        message: responseMessage,
+        message: cleanMessage,
+        chips,
         turnCount: userTurnCount,
         terminated: false,
         mode: "gatekeeper" as AppMode,
