@@ -38,24 +38,29 @@ const lvlOsResponseFormat = {
                     description: "Determines if the backend should just chat, or physically patch/save the document."
                 },
                 edited_sections: {
-                    type: ["array", "null"],
-                    description: "ONLY populate this if editing an existing SOP. Leave empty if just chatting.",
-                    items: {
-                        type: "object",
-                        properties: {
-                            section_header: { type: "string", description: "The exact H2 or H3 heading being modified." },
-                            new_content: { type: "string", description: "The complete replacement text for this specific section." }
+                    anyOf: [
+                        {
+                            type: "array",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    section_header: { type: "string", description: "The exact H2 or H3 heading being modified." },
+                                    new_content: { type: "string", description: "The complete replacement text for this specific section." }
+                                },
+                                required: ["section_header", "new_content"],
+                                additionalProperties: false
+                            }
                         },
-                        required: ["section_header", "new_content"],
-                        additionalProperties: false
-                    }
+                        { type: "null" }
+                    ],
+                    description: "ONLY populate this if editing an existing SOP. Leave empty if just chatting."
                 },
                 extracted_document: {
-                    type: ["string", "null"],
+                    anyOf: [{ type: "string" }, { type: "null" }],
                     description: "If in Room 1 or 2 extracting a FULL new document from scratch. Otherwise null."
                 },
                 internal_state: {
-                    type: ["string", "null"],
+                    anyOf: [{ type: "string" }, { type: "null" }],
                     description: "If in Room 2, the current extraction phase state tag."
                 }
             },
@@ -489,9 +494,15 @@ async function handleContextBuilder(messages: ChatMessage[]) {
 
     const rawContent = completion.choices[0]?.message?.content || "{}";
 
+    // Sanitize: strip markdown code fences if the model wraps its output in ```json ... ```
+    const sanitized = rawContent
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/```\s*$/i, "")
+        .trim();
+
     let parsedResponse;
     try {
-        parsedResponse = JSON.parse(rawContent);
+        parsedResponse = JSON.parse(sanitized);
     } catch (error) {
         console.error("🚨 JSON PARSE FAILED. RAW AI OUTPUT WAS:");
         console.error(rawContent);
@@ -588,7 +599,12 @@ ${LVL_CLASS_1_TEMPLATE}
         response_format: lvlOsResponseFormat,
     });
 
-    const parsedResponse = JSON.parse(completion.choices[0]?.message?.content || "{}");
+    const rawSOPContent = completion.choices[0]?.message?.content || "{}";
+    const sanitizedSOP = rawSOPContent
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/```\s*$/i, "")
+        .trim();
+    const parsedResponse = JSON.parse(sanitizedSOP);
     const {
         conversational_text = "...",
         routing_chips = [],
