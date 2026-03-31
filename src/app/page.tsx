@@ -331,7 +331,7 @@ export default function Home() {
           lVl
         </h1>
         <div className="flex items-center gap-4">
-          {mode !== "context-builder" && !showFrontDoor && (
+          {isTenant && mode !== "context-builder" && !showFrontDoor && (
             <button 
               onClick={() => { setMessages([]); setActiveSOP(null); setMode("horizontal"); }} 
               className="text-xs text-[#878681] tracking-widest uppercase hover:text-white transition-colors"
@@ -470,8 +470,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* Quick Chips (non-terminated, non-front-door) */}
-      {!terminated && !showFrontDoor && lastAssistantChips.length > 0 && !loading && (
+      {/* Quick Chips (non-terminated) */}
+      {!terminated && lastAssistantChips.length > 0 && !loading && (
         <div className="px-6 pb-2 flex flex-wrap gap-3">
           {lastAssistantChips.map((chip, i) => (
             <button
