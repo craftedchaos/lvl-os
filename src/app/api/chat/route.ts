@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { GATEKEEPER_PROMPT } from "@/lib/prompts/gatekeeper";
-import { getContextBuilderPrompt } from "@/lib/prompts/context-builder";
-import { getSOPRefineryPrompt } from "@/lib/prompts/sop-refinery";
+import { CONTEXT_BUILDER_PROMPT } from "@/lib/prompts/context-builder";
+import { ROOM_2_REFINERY_PROMPT } from "@/lib/prompts/sop-refinery";
 import { HORIZONTAL_PROMPT } from "@/lib/prompts/horizontal";
+import { SYSTEM_BRAIN_PROMPT } from "@/lib/prompts/system-brain";
+import { LVL_CLASS_1_TEMPLATE } from "@/lib/prompts/lvl-class-1-template";
 import {
     saveConstraintsDocument,
     loadConstraintsDocument,
@@ -12,6 +14,93 @@ import {
     listSOPs,
     getMostRecentSOP,
 } from "@/lib/storage";
+
+const lvlOsResponseFormat = {
+    type: "json_schema",
+    json_schema: {
+        name: "lvl_os_response",
+        strict: true,
+        schema: {
+            type: "object",
+            properties: {
+                conversational_text: {
+                    type: "string",
+                    description: "The AI's response to the user."
+                },
+                routing_chips: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "2-3 highly contextual routing button labels."
+                },
+                action_intent: {
+                    type: "string",
+                    enum: ["chat", "save_document", "compile_final"],
+                    description: "Determines if the backend should just chat, or physically patch/save the document."
+                },
+                edited_sections: {
+                    type: ["array", "null"],
+                    description: "ONLY populate this if editing an existing SOP. Leave empty if just chatting.",
+                    items: {
+                        type: "object",
+                        properties: {
+                            section_header: { type: "string", description: "The exact H2 or H3 heading being modified." },
+                            new_content: { type: "string", description: "The complete replacement text for this specific section." }
+                        },
+                        required: ["section_header", "new_content"],
+                        additionalProperties: false
+                    }
+                },
+                extracted_document: {
+                    type: ["string", "null"],
+                    description: "If in Room 1 or 2 extracting a FULL new document from scratch. Otherwise null."
+                },
+                internal_state: {
+                    type: ["string", "null"],
+                    description: "If in Room 2, the current extraction phase state tag."
+                }
+            },
+            required: ["conversational_text", "routing_chips", "action_intent", "edited_sections", "extracted_document", "internal_state"],
+            additionalProperties: false
+        }
+    }
+} as const;
+
+// --- Utility: Safely patch specific markdown sections ---
+function patchSOPDocument(originalMarkdown: string, sectionHeader: string, newContent: string): string {
+    const escapedHeader = sectionHeader.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(^(?:#+)\\s*${escapedHeader}\\s*\\n)([\\s\\S]*?)(?=\\n^\\s*#+|$)`, 'mi');
+
+    if (regex.test(originalMarkdown)) {
+        return originalMarkdown.replace(regex, `$1${newContent}\n`);
+    } else {
+        console.warn(`[lVl] Warning: Section "${sectionHeader}" not found in SOP. Patch failed. appending to bottom.`);
+        return originalMarkdown + `\n\n## ${sectionHeader}\n${newContent}\n`;
+    }
+}
+
+const CONTEXT_MANDATE = `
+### FINAL TECHNICAL REQUIREMENT (ROOM 1):
+1. SCHEMA: You MUST output strictly in the REQUIRED JSON SCHEMA.
+2. TONE (NO THERAPIST): NEVER say "Thank you" or "Noted". If you do, the system will crash.
+3. CHIPS (MANDATORY & DYNAMIC): You MUST provide 3 Cunningham's Law guesses specifically tailored to the CURRENT question you are asking. The chips MUST change every single turn.
+4. COMPILATION: On Step 11, switch action_intent to "compile_final".
+FAILURE TO OUTPUT JSON IS A SYSTEM CRASH.`;
+
+const REFINERY_MANDATE = `
+### FINAL TECHNICAL REQUIREMENT:
+1. SCHEMA: You MUST output strictly in the REQUIRED JSON SCHEMA.
+2. TONE: Clinical, precise, no emotional filler.
+3. CHIPS: Output exactly 3 Cunningham's Law chips designed to provoke correction on the current sequence step.
+4. COMPILATION: When reaching Step 17 (or when signaled by user), switch action_intent to "compile_final" and use the exact Markdown Blueprint provided.
+FAILURE TO OUTPUT JSON IS A SYSTEM CRASH.`;
+
+const WORKSPACE_MANDATE = `
+### FINAL TECHNICAL REQUIREMENT:
+1. SCHEMA: You MUST output strictly in the REQUIRED JSON SCHEMA.
+2. TONE (NO THERAPIST): NEVER name the user's emotions (e.g., "overwhelm", "frustration").
+3. THE LABEL: State the operational failure as a cold fact.
+4. CHIPS: Output 3 actionable SOP extraction chips formatted EXACTLY as "Extract SOP: [Specific System Name]".
+FAILURE TO OUTPUT JSON IS A SYSTEM CRASH.`;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "dummy-key-for-build" });
 const INSTANCE_MODE = process.env.INSTANCE_MODE || "gatekeeper";
@@ -52,11 +141,7 @@ interface ChatRequest {
     mode?: AppMode;
     activeSOP?: string;
     chatMode?: "select" | "diagnostic" | "support" | "enterprise" | "faq";
-}
-
-// --- Utility: Strip AI-generated CHIPS from a message ---
-function stripChips(text: string): string {
-    return text.replace(/CHIPS:\s*.+$/m, "").trimEnd();
+    brainDump?: ChatMessage[]; // Triage context passed when Extract SOP chip fires
 }
 
 // --- Utility: Detect "Extract SOP:" trigger in the latest user message ---
@@ -64,7 +149,7 @@ function detectExtractSOPTrigger(messages: ChatMessage[]): string | null {
     if (messages.length === 0) return null;
     const lastUserMsg = [...messages].reverse().find((m) => m.role === "user");
     if (!lastUserMsg) return null;
-    const match = lastUserMsg.content.match(/^Extract SOP:\s*(.+)$/i);
+    const match = lastUserMsg.content.match(/^\[?Extract SOP:\s*(.*?)\]?$/i);
     return match ? match[1].trim() : null;
 }
 
@@ -328,25 +413,8 @@ Then provide a synthesized example: "A Restaurant Operations Manager reduced dec
 // CONTEXT BUILDER (no constraints.md yet)
 // ============================================================
 
-function extractConstraintsDocument(text: string): {
-    cleanText: string;
-    document: string | null;
-} {
-    const delimiter = "===CONSTRAINTS_DOCUMENT===";
-    const parts = text.split(delimiter);
-
-    if (parts.length >= 3) {
-        const document = parts[1].trim();
-        const cleanText =
-            parts[0].trim() + (parts[2] ? "\n\n" + parts[2].trim() : "");
-        return { cleanText: cleanText.trim(), document };
-    }
-
-    return { cleanText: text, document: null };
-}
-
 async function handleContextBuilder(messages: ChatMessage[]) {
-    const basePrompt = getContextBuilderPrompt();
+    const basePrompt = CONTEXT_BUILDER_PROMPT;
 
     // Strip invisible routing commands — these are UI triggers, not user input
     const ROUTING_COMMANDS = new Set(["_init_", "Turn ideas into systems", "Support & Feedback", "Enterprise Inquiry"]);
@@ -356,12 +424,12 @@ async function handleContextBuilder(messages: ChatMessage[]) {
     // Dynamic turn-awareness: prevent Q1 loop + reinforce CHIPS formatting
     let turnDirective: string;
     if (userTurnCount === 0) {
-        turnDirective = "\n\n[SYSTEM: Begin with Step 1 immediately. No preamble. Adapt your phrasing to feel natural. End with dynamic CHIPS.]";
+        turnDirective = "\n\n[SYSTEM: Begin with Step 1 immediately. No preamble. Adapt your phrasing to feel natural.]";
     } else {
-        turnDirective = `\n\n[SYSTEM OVERRIDE: The user has answered. This is turn ${userTurnCount + 1} of the calibration sequence. Evaluate the FULL conversation history. Ask the next thematic question in the sequence — adapt your phrasing to the user's established context. Do NOT repeat previous questions. If this is a Voss Checkpoint turn (after Step 4 or Step 8), provide ONLY the synthesis — do NOT ask the next question. YOU MUST conclude your response with CHIPS.]`;
+        turnDirective = `\n\n[SYSTEM OVERRIDE: The user has answered. This is turn ${userTurnCount + 1} of the calibration sequence. Evaluate the FULL conversation history. Ask the next thematic question in the sequence — adapt your phrasing to the user's established context. Do NOT repeat previous questions. If this is a Voss Checkpoint turn (after Step 4 or Step 8), provide ONLY the synthesis — do NOT ask the next question.]`;
     }
 
-    const systemPrompt = basePrompt + turnDirective;
+    const systemPrompt = basePrompt + turnDirective + "\n\n" + CONTEXT_MANDATE;
 
     // Full history (cleaned) — no slicing. The 11-question calibration requires complete context.
     const apiMessages: ChatMessage[] = [
@@ -371,33 +439,47 @@ async function handleContextBuilder(messages: ChatMessage[]) {
 
     const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        max_tokens: 2000,
+        max_tokens: 2500,
         messages: apiMessages,
+        response_format: lvlOsResponseFormat,
     });
 
-    const rawResponse = completion.choices[0]?.message?.content || "...";
-    const { cleanText, document } = extractConstraintsDocument(rawResponse);
+    const rawContent = completion.choices[0]?.message?.content || "{}";
 
-    if (document) {
-        saveConstraintsDocument(document);
+    let parsedResponse;
+    try {
+        parsedResponse = JSON.parse(rawContent);
+    } catch (error) {
+        console.error("🚨 JSON PARSE FAILED. RAW AI OUTPUT WAS:");
+        console.error(rawContent);
+        return NextResponse.json({ error: "AI returned invalid JSON." }, { status: 500 });
+    }
+
+    const { conversational_text = "...", routing_chips = [], action_intent = "chat", extracted_document = null } = parsedResponse;
+
+    const isCompiling = action_intent === "compile_final" && extracted_document;
+
+    if (isCompiling) {
+        saveConstraintsDocument(extracted_document);
         console.log("[lVl] Constraints Document saved.");
     }
 
     // --- Phase 2 → Phase 3 transition ---
-    // When constraints are saved, append ignition chips for the Horizontal Workspace
-    let finalMessage = cleanText;
-    if (document) {
-        finalMessage = stripChips(finalMessage);
-        finalMessage += "\n\nCHIPS: [Initiate Daily Brain Dump] | [Extract a Specific Task]";
+    let finalMessage = conversational_text;
+    let fallbackChips = routing_chips;
+
+    if (isCompiling) {
+        fallbackChips = ["Initiate Daily Brain Dump", "Extract a Specific Task"];
     }
 
     return NextResponse.json({
         message: finalMessage,
+        chips: fallbackChips,
         turnCount: messages.filter((m) => m.role === "user").length,
         terminated: false,
         mode: "context-builder" as AppMode,
-        constraintsSaved: !!document,
-        ...(document ? { nextMode: "horizontal" as AppMode } : {}),
+        constraintsSaved: !!isCompiling,
+        ...(isCompiling ? { nextMode: "horizontal" as AppMode } : {}),
     });
 }
 
@@ -405,52 +487,49 @@ async function handleContextBuilder(messages: ChatMessage[]) {
 // SOP REFINERY (constraints.md exists, extraction triggered)
 // ============================================================
 
-function extractSOPDocument(text: string): {
-    cleanText: string;
-    document: string | null;
-    sopName: string | null;
-} {
-    const delimiter = "===SOP_DOCUMENT===";
-    const parts = text.split(delimiter);
-
-    if (parts.length >= 3) {
-        const document = parts[1].trim();
-        const nameMatch = document.match(/^#\s*SOP:\s*(.+)$/m);
-        const sopName = nameMatch ? nameMatch[1].trim() : "untitled";
-        // FIX: Include the SOP document in the display text.
-        // Strip the delimiters but KEEP the SOP content visible in chat.
-        const cleanText =
-            parts[0].trim() + "\n\n" + document + (parts[2] ? "\n\n" + parts[2].trim() : "");
-        return { cleanText: cleanText.trim(), document, sopName };
-    }
-
-    return { cleanText: text, document: null, sopName: null };
-}
-
 async function handleSOPRefinery(
     messages: ChatMessage[],
     constraints: string,
-    taskNameContext?: string
+    taskNameContext?: string,
+    brainDump?: ChatMessage[]
 ) {
-    let systemPrompt = getSOPRefineryPrompt();
-    systemPrompt = systemPrompt.replace("{CONSTRAINTS}", constraints);
+    const TEMPLATE_INSTRUCTION = `
+### FINAL OUTPUT BLUEPRINT (DO NOT USE UNTIL STEP 17)
+The following is the lVl Class 1 Template. You must IGNORE this structure entirely while asking the 17 questions. 
+ONLY when you reach Step 17 and switch your action_intent to "compile_final", you will map the collected answers into this exact Markdown structure inside the "extracted_document" field:
+
+${LVL_CLASS_1_TEMPLATE}
+`;
+
+    let systemPrompt = SYSTEM_BRAIN_PROMPT + "\n\n" + ROOM_2_REFINERY_PROMPT + "\n\n" + TEMPLATE_INSTRUCTION + "\n\n" + REFINERY_MANDATE;
+    systemPrompt = systemPrompt.replaceAll("{CONSTRAINTS}", constraints);
 
     // --- "Extract SOP:" trigger: inject task name context and skip S1 ---
-    // If the user triggered extraction from Horizontal Mode via a dynamic chip,
-    // we inject a system hint so the AI skips S1 and starts at S2.
     let apiMessages: ChatMessage[];
 
     if (taskNameContext) {
+        // Build background context block from Triage brain dump if available
+        const brainDumpBlock: ChatMessage | null =
+            brainDump && brainDump.length > 0
+                ? {
+                    role: "system",
+                    content: `--- BACKGROUND CONTEXT (Triage Brain Dump) ---\nThe user provided the following context during their Triage session BEFORE selecting this process. Use this to ground your 17 questions in their actual scenario. Do NOT re-ask anything they have already described:\n\n${brainDump.map((m) => `[${m.role.toUpperCase()}]: ${m.content}`).join("\n\n")}\n--- END BACKGROUND CONTEXT ---`,
+                }
+                : null;
+
         const contextHint: ChatMessage = {
             role: "system",
-            content: `The user has selected to extract the SOP for "${taskNameContext}". Acknowledge this, SKIP Section 1 (Procedure Name), and begin the extraction immediately with Section 2 (Purpose).`,
+            content: `The user has selected to extract the SOP for "${taskNameContext}". Acknowledge this precisely. SKIP Step 1 (Which process are we mapping?), and begin the sequence immediately by asking Step 2.`,
         };
         apiMessages = [
             { role: "system", content: systemPrompt },
+            ...(brainDumpBlock ? [brainDumpBlock] : []),
             contextHint,
             ...messages,
         ];
-        console.log(`[lVl] SOP Refinery triggered with context: ${taskNameContext}`);
+        console.log(`[lVl] SOP Refinery triggered with context: ${taskNameContext}${
+            brainDump?.length ? ` + ${brainDump.length} brain dump messages` : ""
+        }`);
     } else {
         // No sliding window for SOP Refinery — full message array passed
         apiMessages = [
@@ -463,37 +542,50 @@ async function handleSOPRefinery(
         model: "gpt-4o-mini",
         max_tokens: 4000,
         messages: apiMessages,
+        response_format: lvlOsResponseFormat,
     });
 
-    const rawResponse = (completion.choices[0]?.message?.content || "")
-        .replace(/<state>[\s\S]*?<\/state>\n*/g, "")
-        .trim() || "...";
-
-    const { cleanText, document, sopName } = extractSOPDocument(rawResponse);
+    const parsedResponse = JSON.parse(completion.choices[0]?.message?.content || "{}");
+    const {
+        conversational_text = "...",
+        routing_chips = [],
+        action_intent = "chat",
+        extracted_document = null,
+        internal_state = null
+    } = parsedResponse;
 
     let savedSOPName: string | null = null;
-    if (document && sopName) {
+    let sopName: string = taskNameContext || "untitled";
+
+    if (action_intent === "compile_final" && extracted_document) {
+        const nameMatch = extracted_document.match(/^#\s*SOP:\s*(.+)$/m);
+        if (nameMatch) {
+            sopName = nameMatch[1].trim();
+        }
+
         const safeName = sopName.replace(/[^a-zA-Z0-9_-]/g, "_");
-        saveSOP(sopName, document);
+        saveSOP(sopName, extracted_document);
         savedSOPName = safeName;
         console.log(`[lVl] SOP saved: ${sopName}`);
     }
 
-    // Server-side chip stripping on compilation
-    let finalMessage = cleanText;
+    let finalMessage = conversational_text;
+    let finalChips = routing_chips;
+
+    // Server-side chip enforcement on compilation
     if (savedSOPName) {
-        finalMessage = stripChips(finalMessage);
-        finalMessage +=
-            "\n\nCHIPS: [Enter Workspace to Refine This] | [Extract Another SOP]";
+        finalChips = ["Enter Workspace to Refine This", "Extract Another SOP"];
     }
 
     return NextResponse.json({
         message: finalMessage,
+        chips: finalChips,
         turnCount: messages.filter((m) => m.role === "user").length,
         terminated: false,
         mode: "sop-refinery" as AppMode,
-        sopSaved: !!document,
+        sopSaved: !!extracted_document,
         activeSOP: savedSOPName,
+        ...(extracted_document ? { document_content: extracted_document } : {}),
     });
 }
 
@@ -506,28 +598,29 @@ async function handleHorizontal(
     constraints: string,
     activeSOP: string | null
 ) {
-    let prompt = HORIZONTAL_PROMPT.replace("{CONSTRAINTS}", constraints);
+    let prompt = SYSTEM_BRAIN_PROMPT + "\n\n" + HORIZONTAL_PROMPT + "\n\n" + WORKSPACE_MANDATE;
+    prompt = prompt.replaceAll("{CONSTRAINTS}", constraints);
 
     // Inject active SOP context
     if (activeSOP) {
         const sopContent = loadSOP(activeSOP);
         if (sopContent) {
             const sopBlock = `--- ACTIVE SOP: ${activeSOP} ---\n${sopContent}\n--- END SOP ---`;
-            prompt = prompt.replace("{ACTIVE_SOP_BLOCK}", sopBlock);
+            prompt = prompt.replaceAll("{ACTIVE_SOP_BLOCK}", sopBlock);
         } else {
-            prompt = prompt.replace("{ACTIVE_SOP_BLOCK}", "No SOP loaded for this session.");
+            prompt = prompt.replaceAll("{ACTIVE_SOP_BLOCK}", "");
         }
     } else {
-        prompt = prompt.replace("{ACTIVE_SOP_BLOCK}", "No SOP loaded. General workspace mode.");
+        prompt = prompt.replaceAll("{ACTIVE_SOP_BLOCK}", "");
     }
 
     // Inject SOP inventory for context grounding
     const existingSOPs = listSOPs();
     if (existingSOPs.length > 0) {
         const inventory = `--- SOP INVENTORY (${existingSOPs.length} files) ---\n${existingSOPs.map((f) => `- ${f}`).join("\n")}\n--- END INVENTORY ---`;
-        prompt = prompt.replace("{SOP_INVENTORY}", inventory);
+        prompt = prompt.replaceAll("{SOP_INVENTORY}", inventory);
     } else {
-        prompt = prompt.replace("{SOP_INVENTORY}", "No SOPs on file yet.");
+        prompt = prompt.replaceAll("{SOP_INVENTORY}", "No SOPs on file yet.");
     }
 
     // Sliding window: last 10 messages (token defense for daily use)
@@ -540,37 +633,62 @@ async function handleHorizontal(
 
     const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        max_tokens: 2000,
+        max_tokens: 2500,
         messages: apiMessages,
+        response_format: lvlOsResponseFormat,
     });
 
-    const rawResponse = completion.choices[0]?.message?.content || "...";
-
-    // --- SOP Refinement: detect ===SOP_DOCUMENT=== from full document output ---
-    const { cleanText, document, sopName } = extractSOPDocument(rawResponse);
+    const parsedResponse = JSON.parse(completion.choices[0]?.message?.content || "{}");
+    const {
+        conversational_text = "...",
+        routing_chips = [],
+        action_intent = "chat",
+        edited_sections = [],
+        extracted_document = null
+    } = parsedResponse;
 
     let savedSOPName: string | null = null;
-    if (document && sopName) {
+    let sopName: string = "untitled";
+
+    if (action_intent === "save_document" && activeSOP && edited_sections && edited_sections.length > 0) {
+        let currentSOP = loadSOP(activeSOP) || "";
+        for (const edit of edited_sections) {
+            currentSOP = patchSOPDocument(currentSOP, edit.section_header, edit.new_content);
+        }
+        saveSOP(activeSOP, currentSOP);
+        savedSOPName = activeSOP;
+        console.log(`[lVl] SOP patched safely: ${activeSOP}`);
+    } else if (action_intent === "compile_final" && extracted_document) {
+        const nameMatch = extracted_document.match(/^#\s*SOP:\s*(.+)$/m);
+        if (nameMatch) {
+            sopName = nameMatch[1].trim();
+        }
+
         const safeName = sopName.replace(/[^a-zA-Z0-9_-]/g, "_");
-        saveSOP(sopName, document);
+        saveSOP(sopName, extracted_document);
         savedSOPName = safeName;
         console.log(`[lVl] Refined SOP saved: ${sopName}`);
     }
 
-    // Strip AI chips on SOP save, append refinement transition chips
-    let finalMessage = cleanText;
+    let finalMessage = conversational_text;
+    let finalChips = routing_chips;
+
+    // Server-side chip enforcement
     if (savedSOPName) {
-        finalMessage = stripChips(finalMessage);
-        finalMessage += "\n\nCHIPS: [Keep refining] | [Lock it] | [Extract another SOP]";
+        finalChips = ["Keep refining", "Lock it", "Extract another SOP"];
     }
+
+    const cleanInventory = existingSOPs.map((f) => f.replace(/\.md$/, ""));
 
     return NextResponse.json({
         message: finalMessage,
+        chips: finalChips,
         turnCount: messages.filter((m) => m.role === "user").length,
         terminated: false,
         mode: "horizontal" as AppMode,
         activeSOP: savedSOPName || activeSOP,
-        sopSaved: !!document,
+        sopSaved: !!extracted_document,
+        inventory: cleanInventory,
     });
 }
 
@@ -644,11 +762,12 @@ export async function POST(req: NextRequest) {
         if (extractTrigger && mode === "horizontal") {
             console.log(`[lVl] Extract SOP trigger detected: "${extractTrigger}"`);
             mode = "sop-refinery";
-            // Pass only the trigger message (fresh context for new extraction)
+            const brainDump = (body.brainDump || []) as ChatMessage[];
             return handleSOPRefinery(
                 [{ role: "user", content: `Extract SOP: ${extractTrigger}` }],
                 constraints!,
-                extractTrigger
+                extractTrigger,
+                brainDump
             );
         }
 

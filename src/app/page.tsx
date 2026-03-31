@@ -15,20 +15,7 @@ type ChatMode = "select" | "diagnostic" | "support" | "enterprise" | "faq";
 interface Message {
   role: "user" | "assistant" | "system-boundary";
   content: string;
-}
-
-// --- Quick Chips Parser ---
-function parseChips(text: string): { body: string; chips: string[] } {
-  const chipMatch = text.match(/CHIPS:\s*(.+)$/m);
-  if (!chipMatch) return { body: text, chips: [] };
-
-  const body = text.replace(/CHIPS:\s*.+$/m, "").trimEnd();
-  const chips = chipMatch[1]
-    .split("|")
-    .map((c) => c.trim().replace(/^\[|\]$/g, "").trim())
-    .filter(Boolean);
-
-  return { body, chips };
+  chips?: string[];
 }
 
 export default function Home() {
@@ -38,6 +25,7 @@ export default function Home() {
   const [terminated, setTerminated] = useState(false);
   const [mode, setMode] = useState<AppMode | undefined>(undefined);
   const [activeSOP, setActiveSOP] = useState<string | null>(null);
+  const [inventory, setInventory] = useState<string[]>([]);
   const [chatMode, setChatMode] = useState<ChatMode>("select");
   const [initialized, setInitialized] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -48,13 +36,32 @@ export default function Home() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Premium auto-start: tenant instances bypass the front door entirely
+  // Premium auto-start: tenant instances bypass the front door via API lookup
   useEffect(() => {
-    if (isTenant && !initialized) {
-      setInitialized(true);
-      setChatMode("diagnostic"); // Skip the select screen
-      sendMessage("_init_");
+    async function initSystem() {
+      if (isTenant && !initialized) {
+        setInitialized(true);
+        setChatMode("diagnostic"); // Skip the select screen
+        
+        try {
+          const res = await fetch("/api/init");
+          const data = await res.json();
+          if (data.inventory) {
+            setInventory(data.inventory);
+          }
+          if (data.hasConstraints) {
+            setMode("horizontal");
+            // Suppress the initial ping, just load the hub instantly.
+          } else {
+            sendMessage("_init_");
+          }
+        } catch (e) {
+          console.error(e);
+          sendMessage("_init_"); // Fallback
+        }
+      }
     }
+    initSystem();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -97,15 +104,28 @@ export default function Home() {
           content: "New SOP Extraction. Refinery Active.",
         },
       ];
-    } else if (text.trim().startsWith("Extract SOP:")) {
-      // Dynamic SOP extraction trigger from Horizontal Mode Brain Dump
-      const taskName = text.trim().replace(/^Extract SOP:\s*/, "");
-      nextMode = "sop-refinery";
+    } else if (/^\[?Extract SOP:/i.test(text.trim())) {
+      // Visual: transition immediately to Refinery room so UI changes rooms on click.
+      // API: must send 'horizontal' so backend intercept detectExtractSOPTrigger() fires.
+      // Regex allows both "Extract SOP: X" and "[Extract SOP: X]" chip formats.
+      const taskName = text.trim().replace(/^\[?Extract SOP:\s*/i, "").replace(/\]$/, "");
+      nextMode = "sop-refinery"; // Visual state — updates UI immediately
       nextActiveSOP = null;
       transitionMessages = [
         {
           role: "system-boundary",
           content: `SOP Extraction: ${taskName}. Refinery Active.`,
+        },
+      ];
+    } else if (text.trim().startsWith("Load SOP:")) {
+      // Dashboard UI trigger to jump directly into Step 4 Refinement
+      const taskName = text.trim().replace(/^Load SOP:\s*/, "");
+      nextMode = "horizontal";
+      nextActiveSOP = taskName;
+      transitionMessages = [
+        {
+          role: "system-boundary",
+          content: `Loaded: ${taskName}. Refinement Workspace Active.`,
         },
       ];
     } else if (text.trim() === "Extract a Specific Task") {
@@ -119,6 +139,12 @@ export default function Home() {
         },
       ];
     }
+
+    // Capture brain dump BEFORE history truncation — needed for Extract SOP context handoff.
+    // The prior messages (brain dump + triage AI reply) exist in 'messages' state at this point.
+    const brainDumpContext = messages
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
 
     // If transitioning, truncate history. Otherwise preserve.
     const historyForDisplay =
@@ -142,15 +168,24 @@ export default function Home() {
       setActiveSOP(nextActiveSOP);
     }
 
+    // For Extract SOP chip clicks: send 'horizontal' to the backend so the intercept fires,
+    // even though the visual mode has already flipped to 'sop-refinery' above.
+    const isExtractSOPTrigger = /^\[?Extract SOP:/i.test(text.trim());
+    const modeForAPI = isExtractSOPTrigger ? "horizontal" : nextMode;
+
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: apiMessages,
-          mode: nextMode,
+          mode: modeForAPI,
           activeSOP: nextActiveSOP,
           chatMode: currentChatMode,
+          // Pass prior triage context so Refinery has background for its questions
+          ...(isExtractSOPTrigger && brainDumpContext.length > 0
+            ? { brainDump: brainDumpContext }
+            : {}),
         }),
       });
 
@@ -159,6 +194,7 @@ export default function Home() {
       const assistantMessage: Message = {
         role: "assistant",
         content: data.message,
+        chips: data.chips || [],
       };
 
       setMessages([...historyForDisplay, assistantMessage]);
@@ -168,6 +204,7 @@ export default function Home() {
       if (data.activeSOP) setActiveSOP(data.activeSOP);
       if (data.nextMode) setMode(data.nextMode);
       if (data.terminated) setTerminated(true);
+      if (data.inventory) setInventory(data.inventory);
 
       // Phase 2 → 3 transition: insert boundary when constraints are saved
       if (data.constraintsSaved) {
@@ -182,6 +219,14 @@ export default function Home() {
         setTimeout(() => {
           sendMessage("Workspace ready. What are we building today?");
         }, 0);
+      }
+
+      // Render the successfully saved SOP directly
+      if (data.document_content) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: data.document_content }
+        ]);
       }
     } catch {
       setMessages([
@@ -234,18 +279,77 @@ export default function Home() {
   // Get chips from the last assistant message
   const lastMessage = messages[messages.length - 1];
   const lastAssistantChips =
-    lastMessage?.role === "assistant" && !terminated
-      ? parseChips(lastMessage.content).chips
+    lastMessage?.role === "assistant" && !terminated && lastMessage.chips
+      ? lastMessage.chips
       : [];
 
-  // --- Front Door State: no mode selected yet ---
+  // --- Hub Document Loading Logic ---
+  async function handleLoadSOP(name: string) {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/documents?name=${encodeURIComponent(name)}`);
+      const data = await res.json();
+      if (data.content) {
+        setMessages([
+          { role: "system-boundary", content: `Loaded: ${name}. Refinement Workspace Active.` },
+          { role: "assistant", content: data.content }
+        ]);
+        setActiveSOP(name);
+        setMode("horizontal");
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeleteSOP(name: string) {
+    if (!window.confirm(`Delete ${name}?`)) return;
+    try {
+      const res = await fetch(`/api/documents?name=${encodeURIComponent(name)}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.inventory) {
+        setInventory(data.inventory);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // --- Front Door & Hub View State Check ---
   const showFrontDoor = !isTenant && chatMode === "select" && messages.length === 0;
 
   return (
     <main className="relative flex flex-col h-full overflow-hidden bg-black">
       {/* Header */}
-      <header className="px-6 py-4">
-        <h1 className="text-white text-2xl tracking-widest">lVl</h1>
+      <header className="px-6 py-4 flex justify-between items-center bg-[#0a0a0a] border-b border-[#1a1a1a]">
+        <h1 
+          className="text-white text-xl tracking-widest font-semibold cursor-pointer" 
+          onClick={() => { setMessages([]); setActiveSOP(null); setMode("horizontal"); }}
+        >
+          lVl
+        </h1>
+        <div className="flex items-center gap-4">
+          {mode !== "context-builder" && !showFrontDoor && (
+            <button 
+              onClick={() => { setMessages([]); setActiveSOP(null); setMode("horizontal"); }} 
+              className="text-xs text-[#878681] tracking-widest uppercase hover:text-white transition-colors"
+            >
+              [Return to Hub]
+            </button>
+          )}
+          {process.env.NEXT_PUBLIC_INSTANCE_MODE === "tenant" && (
+            <a
+              href="https://billing.stripe.com/p/login/dRm28q74m0ar6OA9rZ7N600"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#333333] text-[10px] uppercase tracking-widest hover:text-[#878681] transition-colors duration-300"
+            >
+              [Manage]
+            </a>
+          )}
+        </div>
       </header>
 
       {/* Messages */}
@@ -255,6 +359,29 @@ export default function Home() {
           <p className="text-[#878681] text-sm">
             lVl OS terminal active. Select your objective.
           </p>
+        )}
+
+        {/* Saved SOP Chips — Vanish once chat has messages */}
+        {!showFrontDoor && messages.length === 0 && !loading && mode === "horizontal" && !activeSOP && inventory.length > 0 && (
+          <div className="flex flex-wrap gap-3 pb-4 border-b border-[#1a1a1a]">
+            {inventory.map((sopName) => (
+              <span key={sopName} className="inline-flex items-center gap-1">
+                <button
+                  onClick={() => handleLoadSOP(sopName)}
+                  className="text-[#878681] text-sm hover:text-white transition-colors duration-150 cursor-pointer"
+                >
+                  [{sopName}]
+                </button>
+                <button
+                  onClick={() => handleDeleteSOP(sopName)}
+                  className="text-[#555] text-xs hover:text-red-500 transition-colors duration-150 cursor-pointer leading-none"
+                  title={`Delete ${sopName}`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
         )}
 
         {/* Normal empty state for tenant modes */}
@@ -286,11 +413,10 @@ export default function Home() {
             );
           }
 
-          // Assistant: parse chips out, render body via Markdown
-          const { body } = parseChips(msg.content);
+          // Assistant: render body directly natively
           return (
             <div key={i}>
-              <MarkdownRenderer content={body} />
+              <MarkdownRenderer content={msg.content} />
             </div>
           );
         })}
@@ -359,6 +485,8 @@ export default function Home() {
         </div>
       )}
 
+
+
       {/* Input (hidden when terminated or on front door) */}
       {!terminated && !showFrontDoor && (
         <form
@@ -377,17 +505,7 @@ export default function Home() {
         </form>
       )}
 
-      {/* Manage Link (Tenant Instances Only) */}
-      {process.env.NEXT_PUBLIC_INSTANCE_MODE === "tenant" && (
-        <a
-          href="https://billing.stripe.com/p/login/dRm28q74m0ar6OA9rZ7N600"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="absolute bottom-4 right-6 bg-black pl-3 text-[#333333] text-[10px] uppercase tracking-widest hover:text-[#878681] transition-colors duration-300 z-50"
-        >
-          [Manage]
-        </a>
-      )}
+
     </main>
   );
 }
