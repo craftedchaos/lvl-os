@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+
+export const maxDuration = 300; // 5-minute execution timeout for large SOP generation
 import { GATEKEEPER_PROMPT } from "@/lib/prompts/gatekeeper";
 import { CONTEXT_BUILDER_PROMPT } from "@/lib/prompts/context-builder";
 import { ROOM_2_REFINERY_PROMPT } from "@/lib/prompts/sop-refinery";
@@ -594,7 +596,7 @@ ${LVL_CLASS_1_TEMPLATE}
 
     const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        max_tokens: 4000,
+        max_tokens: 16384,
         messages: apiMessages,
         response_format: lvlOsResponseFormat,
     });

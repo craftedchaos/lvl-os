@@ -141,8 +141,12 @@ export default function Home() {
     }
 
     // Capture brain dump BEFORE history truncation — needed for Extract SOP context handoff.
-    // The prior messages (brain dump + triage AI reply) exist in 'messages' state at this point.
-    const brainDumpContext = messages
+    // Room Isolation: only grab messages from the CURRENT room (after last system-boundary),
+    // to avoid flooding the Refinery with the entire 22-message Calibration history.
+    const lastBoundaryIndex = messages.map(m => m.role).lastIndexOf("system-boundary");
+    const roomMessages = lastBoundaryIndex >= 0 ? messages.slice(lastBoundaryIndex + 1) : messages;
+
+    const brainDumpContext = roomMessages
       .filter((m) => m.role === "user" || m.role === "assistant")
       .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
 
