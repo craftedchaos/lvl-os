@@ -102,12 +102,14 @@ const REFINERY_MANDATE = `
 FAILURE TO OUTPUT JSON IS A SYSTEM CRASH.`;
 
 const WORKSPACE_MANDATE = `
-### FINAL TECHNICAL REQUIREMENT:
-1. SCHEMA: You MUST output strictly in the REQUIRED JSON SCHEMA.
-2. TONE (NO THERAPIST): NEVER name the user's emotions (e.g., "overwhelm", "frustration").
-3. THE LABEL: State the operational failure as a cold fact.
-4. CHIPS: Output 3 actionable SOP extraction chips formatted EXACTLY as "Extract SOP: [Specific System Name]".
-FAILURE TO OUTPUT JSON IS A SYSTEM CRASH.`;
+CRITICAL JSON MANDATE:
+1. You MUST return ONLY valid JSON. No markdown wrappers.
+2. ALL output MUST strictly adhere to the expected schema.
+3. EXTRACTED_DOCUMENT: Keep null unless executing compile_final (Step 17).
+4. CHIPS: You MUST output EXACTLY 3 chips in the routing_chips array. 
+   - IF IN STATE A (No SOP loaded): They MUST be formatted EXACTLY as "[Extract SOP: Task Name]". 
+   - IF IN STATE B (SOP loaded): They MUST be short, dynamic action steps or questions to refine the document. DO NOT use the Extract SOP syntax here.
+`;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "dummy-key-for-build" });
 const INSTANCE_MODE = process.env.INSTANCE_MODE || "gatekeeper";
@@ -619,7 +621,7 @@ ${LVL_CLASS_1_TEMPLATE}
     let sopName: string = taskNameContext || "untitled";
 
     if (action_intent === "compile_final" && extracted_document) {
-        const nameMatch = extracted_document.match(/^#\s*SOP:\s*(.+)$/m);
+        const nameMatch = extracted_document.match(/^#\s+(.+)$/m);
         if (nameMatch) {
             sopName = nameMatch[1].trim();
         }
@@ -710,6 +712,7 @@ async function handleHorizontal(
 
     let savedSOPName: string | null = null;
     let sopName: string = "untitled";
+    let updatedDocumentContent: string | null = null;
 
     if (action_intent === "save_document" && activeSOP && edited_sections && edited_sections.length > 0) {
         let currentSOP = loadSOP(activeSOP) || "";
@@ -718,6 +721,7 @@ async function handleHorizontal(
         }
         saveSOP(activeSOP, currentSOP);
         savedSOPName = activeSOP;
+        updatedDocumentContent = currentSOP;
         console.log(`[lVl] SOP patched safely: ${activeSOP}`);
     } else if (action_intent === "compile_final" && extracted_document) {
         const nameMatch = extracted_document.match(/^#\s*SOP:\s*(.+)$/m);
@@ -750,6 +754,7 @@ async function handleHorizontal(
         activeSOP: savedSOPName || activeSOP,
         sopSaved: !!extracted_document,
         inventory: cleanInventory,
+        ...(updatedDocumentContent ? { document_content: updatedDocumentContent } : {}),
     });
 }
 
