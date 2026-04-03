@@ -652,6 +652,9 @@ ${LVL_CLASS_1_TEMPLATE}
         finalChips = ["Enter Workspace to Refine This", "Extract Another SOP"];
     }
 
+    const existingSOPs = listSOPs();
+    const cleanInventory = existingSOPs.map((f) => f.replace(/\.md$/, ""));
+
     return NextResponse.json({
         message: finalMessage,
         chips: finalChips,
@@ -660,6 +663,7 @@ ${LVL_CLASS_1_TEMPLATE}
         mode: "sop-refinery" as AppMode,
         sopSaved: !!extracted_document,
         activeSOP: savedSOPName,
+        inventory: cleanInventory,
         ...(extracted_document ? { document_content: extracted_document } : {}),
     });
 }
