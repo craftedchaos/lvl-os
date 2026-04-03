@@ -608,7 +608,19 @@ ${LVL_CLASS_1_TEMPLATE}
         .replace(/^```(?:json)?\s*/i, "")
         .replace(/```\s*$/i, "")
         .trim();
-    const parsedResponse = JSON.parse(sanitizedSOP);
+    let parsedResponse;
+    try {
+        parsedResponse = JSON.parse(sanitizedSOP);
+    } catch (parseError) {
+        console.error(`[lVl] Fatal JSON Parse Error in Refinery. Raw output length: ${rawSOPContent.length}`, parseError);
+        return NextResponse.json({
+            message: "I encountered a formatting error while compiling the final document structure. Please click the chip below to safely retry the compilation.",
+            chips: ["Retry Compilation"],
+            turnCount: messages.filter((m) => m.role === "user").length,
+            terminated: false,
+            mode: "sop-refinery"
+        });
+    }
     const {
         conversational_text = "...",
         routing_chips = [],
