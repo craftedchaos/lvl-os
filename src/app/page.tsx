@@ -28,6 +28,7 @@ export default function Home() {
   const [inventory, setInventory] = useState<string[]>([]);
   const [chatMode, setChatMode] = useState<ChatMode>("select");
   const [initialized, setInitialized] = useState(false);
+  const [showManifesto, setShowManifesto] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const isTenant = process.env.NEXT_PUBLIC_INSTANCE_MODE === "tenant";
@@ -460,6 +461,12 @@ export default function Home() {
             className="text-[#878681] text-sm hover:text-white transition-colors duration-150 cursor-pointer"
           >
             [Enterprise Inquiry]
+          </button>
+          <button
+            onClick={() => setShowManifesto(true)}
+            className="text-[#878681] text-sm hover:text-white transition-colors duration-150 cursor-pointer block mt-4"
+          >
+            [Read the Architecture]
           </button>
         </div>
       )}
