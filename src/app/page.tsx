@@ -335,6 +335,16 @@ export default function Home() {
           lVl
         </h1>
         <div className="flex items-center gap-4">
+          {!isTenant && (
+            <a
+              href={process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#878681] text-[10px] uppercase tracking-widest hover:text-white transition-colors duration-300"
+            >
+              [Get lVl OS]
+            </a>
+          )}
           {isTenant && mode !== "context-builder" && !showFrontDoor && (
             <button 
               onClick={() => { setMessages([]); setActiveSOP(null); setMode("horizontal"); }} 
