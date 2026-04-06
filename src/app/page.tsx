@@ -327,6 +327,78 @@ export default function Home() {
 
   return (
     <main className="relative flex flex-col h-full overflow-hidden bg-black">
+      {showManifesto && (
+        <div className="fixed inset-0 z-50 bg-black overflow-y-auto w-full h-full">
+          <div className="max-w-2xl mx-auto bg-[#111] min-h-screen relative shadow-2xl flex flex-col">
+            
+            {/* Fixed Sticky Header for navigation */}
+            <div className="sticky top-0 bg-[#111] border-b border-[#222] px-6 py-4 flex justify-between items-center z-10 w-full">
+              <button 
+                onClick={() => setShowManifesto(false)} 
+                className="text-xs text-[#878681] tracking-widest uppercase hover:text-white transition-colors"
+              >
+                [Return to Terminal]
+              </button>
+              <a 
+                href={process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK || "#"} 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#878681] text-[10px] uppercase tracking-widest hover:text-white transition-colors duration-300"
+              >
+                [Get lVl OS]
+              </a>
+            </div>
+
+            {/* Typography Content Container */}
+            <div className="p-8 md:p-12 text-white space-y-8 font-light max-w-full">
+              
+              <div>
+                <h1 className="text-xl tracking-widest uppercase text-white border-b border-[#333] pb-4 mb-6">The Architecture</h1>
+                <p className="text-[#878681] text-sm leading-relaxed mb-4">
+                  Most systems fail because they rely on your memory. <br/>
+                  lVl translates your operational chaos into permanent, executable infrastructure.
+                </p>
+                <p className="text-white text-sm tracking-wide">
+                  You are the architect. This is the machine.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xs text-[#878681] uppercase tracking-widest mb-2">01 | The Calibration</h2>
+                  <p className="text-sm text-[#d1d0c5] leading-relaxed">lVl does not assume how you work. Through an initial 11-question sequence, the machine maps your specific friction points, goals, and operational blind spots. It syncs with your logic before it writes a single word.</p>
+                </div>
+
+                <div>
+                  <h2 className="text-xs text-[#878681] uppercase tracking-widest mb-2">02 | The Drop</h2>
+                  <p className="text-sm text-[#d1d0c5] leading-relaxed">Stop filtering your thoughts. Drop the raw, unedited chaos of your workflow directly into the terminal. Describe the exact failure point in your own words. The translation engine requires raw friction to build precise architecture.</p>
+                </div>
+
+                <div>
+                  <h2 className="text-xs text-[#878681] uppercase tracking-widest mb-2">03 | The Translation</h2>
+                  <p className="text-sm text-[#d1d0c5] leading-relaxed">There are no blank pages here. lVl processes your input and generates actionable [quick chips]. You don't have to overthink the prompt—just read the machine's translation, click the closest option, and move forward.</p>
+                </div>
+
+                <div>
+                  <h2 className="text-xs text-[#878681] uppercase tracking-widest mb-2">04 | The Artifact</h2>
+                  <p className="text-sm text-[#d1d0c5] leading-relaxed">Deploy your system immediately. lVl compiles your decisions into a structured, custom Standard Operating Procedure (SOP). Clear, formatted, and ready to hand off. You do not format a single line.</p>
+                </div>
+
+                <div>
+                  <h2 className="text-xs text-[#878681] uppercase tracking-widest mb-2">05 | The Refinement</h2>
+                  <p className="text-sm text-[#d1d0c5] leading-relaxed">Operations change. When your real-world systems shift, never manually rewrite a document again. Speak to lVl as you are: <span className="italic">"The opener should verify the log, not the closer."</span> The machine patches the exact line instantly. You focus on what matters.</p>
+                </div>
+              </div>
+
+              <div className="mt-12 pt-8 border-t border-[#333]">
+                <h2 className="text-sm text-white uppercase tracking-widest mb-2">Tactical Rule:</h2>
+                <p className="text-sm text-[#878681] leading-relaxed">Command, do not edit. Let lVl do the work.</p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <header className="px-6 py-4 flex justify-between items-center bg-[#0a0a0a] border-b border-[#1a1a1a]">
         <h1 
@@ -464,7 +536,7 @@ export default function Home() {
           </button>
           <button
             onClick={() => setShowManifesto(true)}
-            className="text-[#878681] text-sm hover:text-white transition-colors duration-150 cursor-pointer block mt-4"
+            className="text-[#878681] text-sm hover:text-white transition-colors duration-150 cursor-pointer"
           >
             [Read the Architecture]
           </button>
