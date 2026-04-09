@@ -79,7 +79,7 @@ async function createService(projectId: string): Promise<string> {
     `, {
         input: {
             projectId,
-            source: { github: { repo, branch: "main" } },
+            source: { repo },
         },
     });
 
