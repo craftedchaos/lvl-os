@@ -163,9 +163,7 @@ async function createVolume(
         //         input: { serviceId, mountPath, state } (all optional)
         await railwayQuery(`
             mutation($volumeId: String!, $environmentId: String, $input: VolumeInstanceUpdateInput!) {
-                volumeInstanceUpdate(volumeId: $volumeId, environmentId: $environmentId, input: $input) {
-                    id
-                }
+                volumeInstanceUpdate(volumeId: $volumeId, environmentId: $environmentId, input: $input)
             }
         `, {
             volumeId,
