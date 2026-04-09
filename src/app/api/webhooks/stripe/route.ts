@@ -79,7 +79,7 @@ async function createService(projectId: string): Promise<string> {
     `, {
         input: {
             projectId,
-            source: { repo, branch: "main" },
+            source: { github: { repo, branch: "main" } },
         },
     });
 
@@ -109,7 +109,8 @@ async function setVariable(
 async function injectTenantVariables(
     projectId: string,
     serviceId: string,
-    environmentId: string
+    environmentId: string,
+    tier: string = "monthly"
 ): Promise<void> {
     const tenantKey = process.env.TENANT_OPENAI_KEY;
     if (!tenantKey) throw new Error("TENANT_OPENAI_KEY is not set.");
@@ -120,6 +121,7 @@ async function injectTenantVariables(
         TENANT_TYPE: "b2b",
         OPENAI_API_KEY: tenantKey,
         DATA_DIR: "/app/data",
+        TENANT_TIER: tier,
     };
 
     for (const [name, value] of Object.entries(vars)) {
@@ -222,7 +224,7 @@ function sanitizeProjectName(name: string, email: string, sessionId: string): st
 // FULL PROVISIONING PIPELINE
 // ============================================================
 
-async function provisionTenantInstance(customerName: string, customerEmail: string, sessionId: string): Promise<string> {
+async function provisionTenantInstance(customerName: string, customerEmail: string, sessionId: string, tier: string = "monthly"): Promise<string> {
     const projectName = sanitizeProjectName(customerName, customerEmail, sessionId);
     console.log(`[lVl] Provisioning tenant: ${projectName} for ${customerEmail}`);
 
@@ -233,7 +235,7 @@ async function provisionTenantInstance(customerName: string, customerEmail: stri
     const serviceId = await createService(projectId);
 
     // Step 3: Inject environment variables
-    await injectTenantVariables(projectId, serviceId, environmentId);
+    await injectTenantVariables(projectId, serviceId, environmentId, tier);
 
     // Step 4: Create and mount persistent volume
     await createVolume(projectId, serviceId, environmentId);
@@ -370,9 +372,12 @@ export async function POST(req: NextRequest) {
         console.log(`[lVl] Session ID:     ${sessionId}`);
         console.log("================================================");
 
+        const tier = session.mode === "payment" ? "sovereign" : "monthly";
+        console.log(`[lVl] Tier: ${tier}`);
+
         // --- PHASE 2: Railway Provisioning ---
         try {
-            const domain = await provisionTenantInstance(customerName, customerEmail, sessionId);
+            const domain = await provisionTenantInstance(customerName, customerEmail, sessionId, tier);
             console.log(`[lVl] Tenant live at: https://${domain}`);
 
             // --- PHASE 3: Email Delivery ---

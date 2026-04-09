@@ -347,6 +347,14 @@ export default function Home() {
               >
                 [Get lVl OS]
               </a>
+              <a 
+                href={process.env.NEXT_PUBLIC_STRIPE_LIFETIME_LINK || "#"} 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#555] text-[10px] uppercase tracking-widest hover:text-white transition-colors duration-300"
+              >
+                [Sovereign Lifetime]
+              </a>
             </div>
 
             {/* Typography Content Container */}
@@ -409,14 +417,24 @@ export default function Home() {
         </h1>
         <div className="flex items-center gap-4">
           {!isTenant && (
-            <a
-              href={process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK || "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#878681] text-[10px] uppercase tracking-widest hover:text-white transition-colors duration-300"
-            >
-              [Get lVl OS]
-            </a>
+            <>
+              <a
+                href={process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#878681] text-[10px] uppercase tracking-widest hover:text-white transition-colors duration-300"
+              >
+                [Get lVl OS]
+              </a>
+              <a
+                href={process.env.NEXT_PUBLIC_STRIPE_LIFETIME_LINK || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#555] text-[10px] uppercase tracking-widest hover:text-white transition-colors duration-300"
+              >
+                [Sovereign Lifetime]
+              </a>
+            </>
           )}
           {isTenant && mode !== "context-builder" && !showFrontDoor && (
             <button 
@@ -553,6 +571,14 @@ export default function Home() {
             className="block w-full text-center py-3 bg-white text-black text-sm font-semibold tracking-wide hover:bg-[#e0e0e0] transition-colors duration-150"
           >
             Deploy My Private Instance →
+          </a>
+          <a
+            href={process.env.NEXT_PUBLIC_STRIPE_LIFETIME_LINK || "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full text-center py-3 border border-[#333] text-[#878681] text-sm tracking-wide hover:text-white hover:border-[#555] transition-colors duration-150"
+          >
+            Sovereign Lifetime — $2,500 One-Time →
           </a>
           <button
             onClick={handleFAQPivot}
