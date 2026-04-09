@@ -29,6 +29,7 @@ export default function Home() {
   const [chatMode, setChatMode] = useState<ChatMode>("select");
   const [initialized, setInitialized] = useState(false);
   const [showManifesto, setShowManifesto] = useState(false);
+  const [showVision, setShowVision] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const isTenant = process.env.NEXT_PUBLIC_INSTANCE_MODE === "tenant";
@@ -407,6 +408,71 @@ export default function Home() {
           </div>
         </div>
       )}
+      {showVision && (
+        <div className="fixed inset-0 z-50 bg-black overflow-y-auto w-full h-full">
+          <div className="max-w-2xl mx-auto bg-[#111] min-h-screen relative shadow-2xl flex flex-col">
+            
+            {/* Fixed Sticky Header for navigation */}
+            <div className="sticky top-0 bg-[#111] border-b border-[#222] px-6 py-4 flex justify-between items-center z-10 w-full">
+              <button 
+                onClick={() => setShowVision(false)} 
+                className="text-xs text-[#878681] tracking-widest uppercase hover:text-white transition-colors"
+              >
+                [Return to Terminal]
+              </button>
+              <a 
+                href={process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK || "#"} 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#878681] text-[10px] uppercase tracking-widest hover:text-white transition-colors duration-300"
+              >
+                [Get lVl OS]
+              </a>
+              <a 
+                href={process.env.NEXT_PUBLIC_STRIPE_LIFETIME_LINK || "#"} 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#555] text-[10px] uppercase tracking-widest hover:text-white transition-colors duration-300"
+              >
+                [Sovereign Lifetime]
+              </a>
+            </div>
+
+            {/* Typography Content Container */}
+            <div className="p-8 md:p-12 text-white space-y-8 font-light max-w-full">
+              
+              <div>
+                <h1 className="text-xl tracking-widest uppercase text-white border-b border-[#333] pb-4 mb-6">The Vision</h1>
+                <p className="text-[#878681] text-sm leading-relaxed mb-4">
+                  lVl functions as a flight recorder for your cognitive reality.
+                </p>
+                <p className="text-white text-sm tracking-wide">
+                  We are not building productivity software; we are creating the foundation for the digital continuity of logic across generations.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xs text-[#878681] uppercase tracking-widest mb-2">01 | The Operating Record</h2>
+                  <p className="text-sm text-[#d1d0c5] leading-relaxed">lVl does not just capture tasks—it provides the infrastructure for you to map your own operational logic. Every stress pattern you decode, every breakthrough you systemize, and every moment of clarity becomes a permanent asset. You are constructing a longitudinal dataset of your own mind that is impossible to replicate.</p>
+                </div>
+
+                <div>
+                  <h2 className="text-xs text-[#878681] uppercase tracking-widest mb-2">02 | The Digital Legacy</h2>
+                  <p className="text-sm text-[#d1d0c5] leading-relaxed mb-4">This is not a feature; it is the endpoint. By capturing your complete operational logic, the system establishes a framework for digital immortality.</p>
+                  <p className="text-sm text-[#d1d0c5] leading-relaxed">Your future descendants will not just inherit photos. They will inherit your decision-making patterns, your hard-won insights, and your exact way of thinking. Because of the systems you extract today, future generations will be born with the toolkit that you did not have.</p>
+                </div>
+              </div>
+
+              <div className="mt-12 pt-8 border-t border-[#333]">
+                <h2 className="text-sm text-white uppercase tracking-widest mb-2">Tactical Rule:</h2>
+                <p className="text-sm text-[#878681] leading-relaxed">Do not just execute. Extract the logic.</p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <header className="px-6 py-4 flex justify-between items-center bg-[#0a0a0a] border-b border-[#1a1a1a]">
         <h1 
@@ -557,6 +623,12 @@ export default function Home() {
             className="text-[#878681] text-sm hover:text-white transition-colors duration-150 cursor-pointer"
           >
             [Read the Architecture]
+          </button>
+          <button
+            onClick={() => setShowVision(true)}
+            className="text-[#878681] text-sm hover:text-white transition-colors duration-150 cursor-pointer"
+          >
+            [Long Term Vision]
           </button>
         </div>
       )}
