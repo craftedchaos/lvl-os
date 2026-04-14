@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { Resend } from "resend";
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Safely initialize Resend ONLY if the key exists (Prevents Railway tenant crashes)
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // --- Disable Next.js body parsing (Stripe needs the raw body for signature verification) ---
 export const dynamic = "force-dynamic";
@@ -377,17 +378,19 @@ export async function POST(req: NextRequest) {
 
         // --- PHASE 1.5: Internal Watchdog Alert ---
         try {
-            await resend.emails.send({
-                from: 'lVl System <system@stblvl.com>',
-                to: 'omar.rivas.biz1@gmail.com',
-                subject: `[lVl] PROVISIONING STARTED: ${customerEmail}`,
-                text: `New tenant detected: ${customerName} (${customerEmail}).\nTier: ${tier}.\nSession ID: ${sessionId}\n\nProvisioning sequence is initializing on Railway now. Check Railway dashboard if deployment email is not received within 3 minutes.`,
-            });
-            console.log(`[lVl] Watchdog alert sent to Admin.`);
+            if (resend) {
+                await resend.emails.send({
+                    from: 'lVl System <system@stblvl.com>',
+                    to: 'omar.rivas.biz1@gmail.com',
+                    subject: `[lVl] PROVISIONING STARTED: ${customerEmail}`,
+                    text: `New tenant detected: ${customerName} (${customerEmail}).\nTier: ${tier}.\nSession ID: ${sessionId}\n\nProvisioning sequence is initializing on Railway now.`,
+                });
+                console.log(`[lVl] Watchdog alert sent to Admin.`);
+            } else {
+                console.log(`[lVl] Watchdog skipped: No RESEND_API_KEY configured for this environment.`);
+            }
         } catch (alertErr) {
             console.error(`[lVl] Watchdog alert failed:`, alertErr);
-            // We do not throw the error. If the admin email fails, 
-            // we still want to provision the tenant!
         }
 
         // --- PHASE 2: Railway Provisioning ---
