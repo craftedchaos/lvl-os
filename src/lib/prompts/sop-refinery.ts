@@ -152,6 +152,5 @@ On your VERY NEXT TURN, execute the following:
   "internal_state": "Complete",
   "extracted_document": "<STRICTLY OUTPUT THE RAW MARKDOWN STRING EXACTLY MATCHING THE FORMAT OF THE LVL CLASS 1 TEMPLATE>"
 }
-\`\`\`
 DO NOT ask any more questions after Step 17. Compile immediately.
 `;
