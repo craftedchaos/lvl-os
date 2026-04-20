@@ -251,7 +251,7 @@ async function handleGatekeeper(messages: ChatMessage[]) {
     }
 
     // Inject turn count so the AI knows when to deliver final diagnosis
-    const turnAwarePrompt = GATEKEEPER_PROMPT + OFF_TOPIC_GUARDRAIL + `\n\n[SYSTEM: This is the user's turn ${userTurnCount + 1} of 4. ${userTurnCount >= 3 ? "THIS IS THE FINAL DIAGNOSTIC TURN. Deliver your synthesis now. Do not ask another question." : "Ask one calibrated question. Output 3 diagnostic CHIPS."}]` + `\n\n=== CRITICAL FORMATTING MANDATE ===\nRegardless of path (Business, Personal, or Both), your final output line MUST strictly be:\nCHIPS: [Cause 1] | [Cause 2] | [Cause 3]`;
+    const turnAwarePrompt = GATEKEEPER_PROMPT + OFF_TOPIC_GUARDRAIL + `\n\n[SYSTEM: This is the user's turn ${userTurnCount + 1} of 4. ${userTurnCount >= 3 ? "THIS IS THE FINAL DIAGNOSTIC TURN. Deliver your synthesis now. Do not ask another question." : "Ask one calibrated question. Output 3 diagnostic CHIPS."}]` + `\n\n=== CRITICAL FORMATTING MANDATE ===\nRegardless of path (Business, Personal, or Both), your final output line MUST strictly be:\nCHIPS: [Option 1] | [Option 2] | [Option 3]`;
 
     const windowedMessages = messages.slice(-10);
 
@@ -430,10 +430,11 @@ Then provide a synthesized example: "A Restaurant Operations Manager reduced dec
 4. If asked about security, say: "Every customer gets their own isolated server. No shared database. No one else can access your data."
 5. If asked about setup time, say: "11 questions to calibrate. First SOP extracted in under 10 minutes."
 6. Do not be salesy. Be factual.
-7. THE ANTICIPATION ENGINE (CHIPS): You must proactively guide the user through natural buying objections. Always provide 3 relevant CHIPS that anticipate the *next* logical barrier. 
-- Rotate through: [Time/Setup], [Proof/Validation], [Security/Privacy], and [Cost].
+7. THE ANTICIPATION ENGINE (CHIPS): You must proactively guide the user through natural buying objections. Always provide 3 relevant CHIPS that anticipate the *next* logical barrier.
+- Rotate through categories: Setup Time, Proof, Security, and Cost.
+- Crucial: Write the chips as natural, human-sounding questions from the user's perspective (e.g., "How long does setup take?", "Is my data private?", "What does it cost?"). Do NOT use category labels.
 - If they ask about features/setup, anticipate Proof or Cost.
-- If they ask about Cost, anticipate Security or Time.
+- If they ask about Cost, anticipate Security or Setup Time.
 - If they have not seen the Clinical Validation data, one chip MUST be "Show Clinical Validation" or "Does this actually work?".
 Do NOT include a 'Start using lVl now' chip — the system UI handles that.
 ` + OFF_TOPIC_GUARDRAIL + `
