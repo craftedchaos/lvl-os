@@ -421,7 +421,7 @@ Then provide a synthesized example: "A Restaurant Operations Manager reduced dec
 4. If asked about security, say: "Every customer gets their own isolated server. No shared database. No one else can access your data."
 5. If asked about setup time, say: "11 questions to calibrate. First SOP extracted in under 10 minutes."
 6. Do not be salesy. Be factual.
-7. Always end with 3 relevant CHIPS addressing likely follow-up questions or objections. Do NOT include a 'Start using lVl now' chip — that is handled by the system automatically.` + OFF_TOPIC_GUARDRAIL;
+7. Always end with 3 relevant CHIPS addressing likely follow-up questions or objections. If the user has not yet asked for proof, one of the chips MUST be "Show Clinical Validation". Do NOT include a 'Start using lVl now' chip — that is handled by the system automatically.` + OFF_TOPIC_GUARDRAIL;
 
     const apiMessages: ChatMessage[] = [
         { role: "system", content: systemPrompt },
@@ -585,9 +585,8 @@ ${LVL_CLASS_1_TEMPLATE}
             contextHint,
             ...messages,
         ];
-        console.log(`[lVl] SOP Refinery triggered with context: ${taskNameContext}${
-            brainDump?.length ? ` + ${brainDump.length} brain dump messages` : ""
-        }`);
+        console.log(`[lVl] SOP Refinery triggered with context: ${taskNameContext}${brainDump?.length ? ` + ${brainDump.length} brain dump messages` : ""
+            }`);
     } else {
         // No sliding window for SOP Refinery — full message array passed
         apiMessages = [
