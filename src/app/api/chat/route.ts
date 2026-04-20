@@ -394,18 +394,18 @@ You have the FULL conversation history from the diagnostic. Use it.
 
 ${isFirstFAQTurn ? `FIRST RESPONSE ONLY: Provide a concise, tailored overview of how lVl OS directly solves the specific pain points identified in the diagnostic conversation above. Reference their exact words. Then end with: "What else would you like to know before moving forward?"` : `Answer their question directly and concisely. 1-3 sentences. No fluff.`}
 
-=== TESTIMONIAL LORE BANK ===
+=== CLINICAL VALIDATION ===
 
-When the user asks for proof, examples, results, or case studies, select the most relevant testimonial:
+When the user asks for proof, examples, results, or case studies, present this clinical validation data:
 
-BREWERY / RESTAURANT / HOSPITALITY:
-"Shaye, President of the Colorado Craft Brewers Guild, used lVl OS to extract undocumented tribal knowledge from her senior staff and convert it into constraint-driven SOPs. Her team stopped losing procedures every time someone quit."
+STATUS: Functional MVP — Live in Production
+VALIDATION METHOD: Blind Clinical Testing (users given zero instruction, observed extracting SOPs from zero-state)
+INTERFACE CLARITY: 4.5 / 5
+OUTPUT QUALITY: 5.0 / 5
+USER CONSENSUS: "Helpful clarity for confronting the necessary task."
 
-GYM / FITNESS / COACHING:
-"Sam used lVl OS to systematize his gym's onboarding, programming, and member retention workflows. Procedures that lived in his head are now documented systems his coaches follow independently."
-
-PERSONAL DEVELOPMENT / SELF-IMPROVEMENT:
-"The founder, Omar, lost 155 lbs and taught himself how to code — both using constraint-driven systems. lVl OS was built from the same framework he used to restructure his own life."
+If the user asks about a specific industry or use case, respond factually:
+"lVl has been validated across hospitality operations, fitness programming, and personal systems development. The extraction engine is domain-agnostic — it works on any process that currently lives in someone's head."
 
 === THE PRIVACY SHIELD (Unmatched Industries) ===
 

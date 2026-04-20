@@ -308,6 +308,7 @@ use your judgment.</p>
         },
         body: JSON.stringify({
             from: fromEmail,
+            reply_to: 'omar.rivas.biz1@gmail.com',
             to: customerEmail,
             subject: "Your lVl OS instance is live.",
             html: emailBody,
