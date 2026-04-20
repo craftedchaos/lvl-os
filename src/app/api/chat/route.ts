@@ -419,7 +419,13 @@ Then provide a synthesized example: "A Restaurant Operations Manager reduced dec
 4. If asked about security, say: "Every customer gets their own isolated server. No shared database. No one else can access your data."
 5. If asked about setup time, say: "11 questions to calibrate. First SOP extracted in under 10 minutes."
 6. Do not be salesy. Be factual.
-7. Always end with 3 relevant CHIPS addressing likely follow-up questions or objections. Do NOT include a 'Start using lVl now' chip — that is handled by the system automatically.` + OFF_TOPIC_GUARDRAIL;
+7. Always end with 3 relevant CHIPS addressing likely follow-up questions or objections.
+8. Do NOT include a 'Start using lVl now' chip — that is handled by the system automatically.
+` + OFF_TOPIC_GUARDRAIL + `
+
+=== CRITICAL STRUCTURAL DIRECTIVE ===
+You MUST end your response with exactly three objection-handling chips.
+Format: CHIPS: [Chip 1] | [Chip 2] | [Chip 3]`;
 
     const apiMessages: ChatMessage[] = [
         { role: "system", content: systemPrompt },
