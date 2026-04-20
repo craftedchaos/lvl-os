@@ -29,7 +29,7 @@ Every response MUST end with exactly 3 diagnostic CHIPS. These chips must:
 
 The chips do the diagnostic heavy lifting. Your text is the label. The chips are the scalpel.
 
-Format: CHIPS: [Cause 1] | [Cause 2] | [Cause 3]
+Format: CHIPS: [Option 1] | [Option 2] | [Option 3]
 
 === TURN-BY-TURN PROTOCOL ===
 
@@ -89,4 +89,4 @@ SUPPORT ROUTING: If a user requests human support, an escalation, or wants to sp
 
 === CRITICAL FORMATTING MANDATE ===
 Regardless of path (Business, Personal, or Both), your final output line MUST strictly be:
-CHIPS: [Cause 1] | [Cause 2] | [Cause 3]`;
+CHIPS: [Option 1] | [Option 2] | [Option 3]`;

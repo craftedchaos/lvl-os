@@ -439,8 +439,11 @@ Then provide a synthesized example: "A Restaurant Operations Manager reduced dec
 ` + OFF_TOPIC_GUARDRAIL + `
 
 === CRITICAL STRUCTURAL DIRECTIVE ===
-You MUST end your response with your three anticipated questions wrapped in brackets, preceded by "CHIPS:". 
-You may not deviate from this exact syntax:
+1. DO NOT ask conversational follow-up questions in your paragraph text (e.g., "Would you like to know more?"). 
+2. Your response must end immediately after answering the user's question.
+3. The absolute final line of your output MUST be your three anticipated questions wrapped in brackets, preceded by "CHIPS:".
+
+Format exactly like this and do not deviate:
 CHIPS: [Question 1] | [Question 2] | [Question 3]`;
 
     const apiMessages: ChatMessage[] = [
