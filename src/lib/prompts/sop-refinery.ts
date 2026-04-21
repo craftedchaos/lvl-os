@@ -153,17 +153,18 @@ Example — Step 6 (Timeline), Constraint: "User only works on systems from 6AM-
 When the user answers Step 17 (Next Action), the interview is permanently OVER. 
 On your VERY NEXT TURN, execute the following:
 1. Set "action_intent" to "compile_final".
-2. SYNTHESIZE all 17 answers into the exact Markdown structure of the LVL CLASS 1 TEMPLATE provided below. 
-3. Output this exact JSON structure:
+2. OVERRIDE Cunningham's Law: For this final step ONLY, do NOT output the psychological triad. You MUST output exactly ONE routing chip.
+3. SYNTHESIZE all 17 answers into the exact Markdown structure of the LVL CLASS 1 TEMPLATE provided below. 
+4. Output this exact JSON structure:
 
-\`\`\`json
 {
-  "conversational_text": "Protocol extracted and compiled to your hard drive. Click 'Enter Workspace' below to view and refine it.",
+  "conversational_text": "Protocol extracted and compiled to your hard drive. Click 'Enter Workspace to Refine This' below to view and refine it.",
   "routing_chips": ["Enter Workspace to Refine This"],
   "action_intent": "compile_final",
   "edited_sections": null,
   "internal_state": "Complete",
   "extracted_document": "<STRICTLY OUTPUT THE RAW MARKDOWN STRING EXACTLY MATCHING THE FORMAT OF THE LVL CLASS 1 TEMPLATE>"
 }
+
 DO NOT ask any more questions after Step 17. Compile immediately.
 `;
