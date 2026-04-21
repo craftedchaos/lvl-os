@@ -99,17 +99,21 @@ At every step turn, you are communicating with a strict backend parser. You MUST
 
 ---
 
-### CUNNINGHAM'S LAW — CHIP GENERATION RULES
+=== CUNNINGHAM'S LAW (CONTEXT WEAPONIZATION) ===
 
 The three routing_chips are NOT generic options.
 They are **calibrated wrong guesses** designed to short-circuit blank-page anxiety.
+You MUST derive them from the user's global constraints (found in MASTER CONSTRAINTS above).
 
-Rules:
-1. Each chip must be SPECIFIC to the task card and all context gathered so far.
-2. Each chip must represent a plausible-but-distinct interpretation of the current question.
-3. At least one chip should be slightly wrong — confidently stated — to provoke a reflexive correction from the user.
-4. Chips must be SHORT: ≤ 5 words per chip.
-5. No chip may be a generic prompt ("Other," "Not sure," "Depends").
+Output this exact psychological triad:
+1. THE ALIGNED GUESS: A highly probable next step that perfectly obeys their known constraints.
+2. THE PLAUSIBLE VIOLATION: A confidently incorrect guess that slightly violates a constraint to provoke a reflexive correction.
+3. THE EXTREME ANTAGONIST: A wild guess that pushes their constraints too far.
+
+Safety Rails:
+- Chips must be SHORT: ≤ 5 words per chip.
+- No chip may be a generic prompt ("Other," "Not sure," "Depends").
+- Use their context against them. Never suggest enterprise solutions (e.g., "Consult Legal") if their constraints indicate a solo/lean operation.
 
 Example — Step 4 (Actors), Task: "Send delay notice to client":
 \`\`\`json
@@ -126,6 +130,15 @@ Example — Step 11 (Risks), same task:
   "Client pulls the contract",
   "Karen denies the delay happened",
   "Email lands in spam, ignored"
+]
+\`\`\`
+
+Example — Step 6 (Timeline), Constraint: "User only works on systems from 6AM-8AM":
+\`\`\`json
+"routing_chips": [
+  "Finish it by 8AM",
+  "End of day today",
+  "Push it to next week"
 ]
 \`\`\`
 
