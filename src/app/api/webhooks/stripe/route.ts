@@ -298,7 +298,7 @@ this is a tool for thinking and structuring.<br>
 read through anything it generates before using it in the real world.<br>
 use your judgment.</p>
 
-<p>lVl s p a c e to begin —|••</p>`;
+<p>lVl set the blanace —|••</p>`;
 
     const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
