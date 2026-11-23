@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IVI — Custom tools, connected software, AI</title>
+  <meta name="description" content="IVI builds custom internal tools, connects the software you already use, and adds AI where it helps. Fixed-fee projects for growing businesses." />
+  <meta name="theme-color" content="#0C0F10" />
+  <link rel="canonical" href="/" />
+  <meta property="og:title" content="IVI — Custom tools, connected software, AI" />
+  <meta property="og:description" content="Custom internal tools, connections between the software you already use, and AI where it helps." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230C0F10'/%3E%3Crect x='10' y='38' width='8' height='16' rx='2' fill='%23FBF8F3'/%3E%3Crect x='24' y='28' width='8' height='26' rx='2' fill='%23FBF8F3'/%3E%3Crect x='38' y='18' width='8' height='36' rx='2' fill='%23FBF8F3'/%3E%3Ccircle cx='52' cy='20' r='5' fill='%23E9580C'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/site/styles.css" />
+  <noscript>
+    <style>[data-reveal]{opacity:1 !important;transform:none !important}</style>
+  </noscript>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <a class="brand" href="#top" aria-label="IVI — home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40" width="34" height="34" focusable="false">
+            <rect x="5" y="24" width="5" height="10" rx="1" fill="currentColor" />
+            <rect x="14" y="17" width="5" height="17" rx="1" fill="currentColor" />
+            <rect x="23" y="10" width="5" height="24" rx="1" fill="currentColor" />
+            <circle cx="32" cy="12" r="3.4" fill="#E9580C" />
+          </svg>
+        </span>
+        <span class="brand-type">
+          <span class="brand-name">IVI</span>
+          <span class="brand-sub">Engineering &amp; Automation</span>
+        </span>
+      </a>
+
+      <nav class="nav" id="nav" aria-label="Primary">
+        <ul class="nav-list">
+          <li><a href="#who">Who it's for</a></li>
+          <li><a href="#services">Services</a></li>
+          <li><a href="#approach">Approach</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+        <a class="btn btn-primary nav-cta" href="#contact">Book a call</a>
+      </nav>
+
+      <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="nav" aria-label="Open menu">
+        <span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="container hero-inner">
+        <div class="hero-copy">
+          <p class="eyebrow eyebrow-light" data-reveal>
+            <span class="dot" aria-hidden="true"></span> Engineering &amp; automation · Orange County, CA
+          </p>
+          <h1 class="hero-title" data-reveal style="--d:60ms">
+            Build what's missing.<br />
+            Connect what you have.<br />
+            Use AI where it <em>helps.</em>
+          </h1>
+          <p class="hero-lead" data-reveal style="--d:120ms">
+            We build custom internal tools, connect the software you already use, and add AI
+            where it makes the work easier. We start with the people doing the work, not the software.
+          </p>
+          <div class="hero-actions" data-reveal style="--d:180ms">
+            <a class="btn btn-primary btn-lg" href="#contact">
+              Book a 20-minute call
+              <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 8h11M8.5 3.5 13 8l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+            <a class="btn btn-ghost btn-lg" href="#services">See what we do</a>
+          </div>
+          <ul class="hero-fit" data-reveal style="--d:240ms">
+            <li><span class="fit-k">$10k+</span><span class="fit-v">monthly cloud or AI spend</span></li>
+            <li><span class="fit-k">3+ yrs</span><span class="fit-v">age of the software we update</span></li>
+            <li><span class="fit-k">2+</span><span class="fit-v">people doing work by hand</span></li>
+          </ul>
+        </div>
+
+        <div class="hero-visual" data-reveal style="--d:260ms">
+          <figure class="audit-card" aria-label="Illustrative cloud spend review showing monthly costs falling after changes">
+            <div class="audit-head">
+              <span class="audit-title"><span class="live-dot" aria-hidden="true"></span> cloud_spend.log</span>
+              <span class="audit-meta">review · illustrative</span>
+            </div>
+
+            <div class="audit-chart">
+              <span class="chart-badge">−38% <small>monthly spend</small></span>
+              <svg class="chart" viewBox="0 0 520 224" role="img" aria-hidden="true">
+                <defs>
+                  <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#E9580C" stop-opacity=".28" />
+                    <stop offset="100%" stop-color="#E9580C" stop-opacity="0" />
+                  </linearGradient>
+                  <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#E9580C" />
+                    <stop offset="55%" stop-color="#E9580C" />
+                    <stop offset="56%" stop-color="#2FB3A5" />
+                    <stop offset="100%" stop-color="#2FB3A5" />
+                  </linearGradient>
+                </defs>
+                <g class="grid" stroke="rgba(251,248,243,.1)" stroke-width="1">
+                  <line x1="16" y1="40" x2="504" y2="40" />
+                  <line x1="16" y1="84" x2="504" y2="84" />
+                  <line x1="16" y1="128" x2="504" y2="128" />
+                  <line x1="16" y1="172" x2="504" y2="172" />
+                </g>
+                <line class="cut-line" x1="304" y1="22" x2="304" y2="192" stroke="rgba(251,248,243,.28)" stroke-width="1" stroke-dasharray="4 5" />
+                <text class="chart-label" x="298" y="18" text-anchor="end">changes made</text>
+                <path class="chart-area" d="M20 168 L104 156 L188 148 L272 118 L304 84 L336 116 L400 148 L470 164 L500 170 L500 196 L20 196 Z" fill="url(#area)" />
+                <path class="chart-line" d="M20 168 L104 156 L188 148 L272 118 L304 84 L336 116 L400 148 L470 164 L500 170"
+                      fill="none" stroke="url(#lineGrad)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+                <g class="chart-points">
+                  <circle cx="304" cy="84" r="5.5" fill="#0C0F10" stroke="#E9580C" stroke-width="2.4" />
+                  <circle cx="500" cy="170" r="5.5" fill="#0C0F10" stroke="#2FB3A5" stroke-width="2.4" />
+                </g>
+                <g class="chart-axis" fill="rgba(251,248,243,.42)">
+                  <text x="20" y="216">Q1</text>
+                  <text x="166" y="216">Q2</text>
+                  <text x="312" y="216">Q3</text>
+                  <text x="470" y="216">Q4</text>
+                </g>
+              </svg>
+            </div>
+
+            <div class="audit-findings">
+              <div class="finding"><span>Idle servers</span><b>12 found</b></div>
+              <div class="finding"><span>Wasted data transfer</span><b>$1.9k/mo</b></div>
+              <div class="finding"><span>AI model use</span><b>3 tiers</b></div>
+            </div>
+          </figure>
+
+          <div class="audit-note" aria-hidden="true">
+            <svg viewBox="0 0 16 16" width="14" height="14"><path d="M3 8.5 6.2 12 13 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Fixed-fee review, delivered in writing
+          </div>
+        </div>
+      </div>
+
+      <div class="container sector-strip">
+        <span class="sector-label">Built for</span>
+        <ul class="sector-list">
+          <li>Series A–B startups</li>
+          <li>Bootstrapped SaaS</li>
+          <li>E-commerce</li>
+          <li>Law firms</li>
+          <li>Real estate</li>
+          <li>Agencies</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- WHO IT'S FOR -->
+    <section class="section" id="who">
+      <div class="container">
+        <header class="section-head">
+          <p class="eyebrow" data-reveal>Who it's for</p>
+          <h2 class="section-title" data-reveal style="--d:60ms">You can see the work that should not take this long.</h2>
+          <p class="section-lead" data-reveal style="--d:120ms">
+            We work with business owners and operators who see opportunities to make the
+            work easier, but need the right tools and technical help to make it happen.
+            They are not shopping for more software. They want less work.
+          </p>
+        </header>
+
+        <div class="signal-grid">
+          <article class="signal-card" data-reveal>
+            <div class="signal-top">
+              <span class="signal-num">01</span>
+              <span class="pill pill-orange">Cloud &amp; AI</span>
+            </div>
+            <h3>The cloud bill grows faster than the business.</h3>
+            <p>
+              You moved quickly. The bill moved with you. Now it climbs every month,
+              and no one has the time to find out why.
+            </p>
+            <p class="signal-fit"><span>Built for</span> Series A–B teams, 10–50 people, $10k+ a month in cloud or AI spend.</p>
+          </article>
+
+          <article class="signal-card" data-reveal style="--d:80ms">
+            <div class="signal-top">
+              <span class="signal-num">02</span>
+              <span class="pill pill-teal">Old software</span>
+            </div>
+            <h3>The software is older than the team that maintains it.</h3>
+            <p>
+              The people who built it are gone. Updates are risky. New features wait.
+              The business depends on something no one wants to touch.
+            </p>
+            <p class="signal-fit"><span>Built for</span> Profitable SaaS and e-commerce companies. Core application three or more years old.</p>
+          </article>
+
+          <article class="signal-card" data-reveal style="--d:160ms">
+            <div class="signal-top">
+              <span class="signal-num">03</span>
+              <span class="pill pill-ink">Manual work</span>
+            </div>
+            <h3>The plan for more work is another admin.</h3>
+            <p>
+              Data gets copied from one tool to another. Documents get read by hand.
+              The hours are real, and they grow with every new client.
+            </p>
+            <p class="signal-fit"><span>Built for</span> Law firms, real estate, and agencies with two or more people doing manual data work full time.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- SERVICES -->
+    <section class="section section-lined" id="services">
+      <div class="container">
+        <header class="section-head section-head-split">
+          <div>
+            <p class="eyebrow" data-reveal>Services</p>
+            <h2 class="section-title" data-reveal style="--d:60ms">What we do, in plain terms.</h2>
+          </div>
+          <p class="section-lead" data-reveal style="--d:120ms">
+            Every project is scoped and quoted at a fixed fee. You approve the number
+            before we start.
+          </p>
+        </header>
+
+        <div class="offers">
+          <article class="offer" data-reveal>
+            <div class="offer-aside">
+              <span class="offer-index">01 / Cloud &amp; AI</span>
+              <h3 class="offer-name">Cloud &amp; AI spend review</h3>
+              <p class="offer-price">Starting at <b>$5,000</b></p>
+              <p class="offer-scope">Review and savings plan only. Implementation and ongoing monitoring are quoted separately.</p>
+              <a class="link-arrow" href="#contact">Review your cloud spend
+                <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M2 8h11M8.5 3.5 13 8l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+            </div>
+            <div class="offer-body">
+              <p class="offer-desc">
+                Cloud and AI costs often grow faster than revenue. We look at what you run.
+                We find what you pay for and do not use. We show you how to lower the bill
+                without slowing the work down.
+              </p>
+              <div class="offer-detail">
+                <div>
+                  <h4>The problem</h4>
+                  <ul class="list-x">
+                    <li>AWS, Azure, or GCP bills that keep climbing</li>
+                    <li>AI requests sent to models that cost more than they need to</li>
+                    <li>Servers that sit idle</li>
+                    <li>No clear view of what drives the bill</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4>What you get</h4>
+                  <ul class="list-check">
+                    <li>A written review of what you run and what it costs</li>
+                    <li>A ranked list of savings</li>
+                    <li>Recommendations for cheaper models and caching where it is safe</li>
+                    <li>A written plan for implementation and monitoring</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="offer" data-reveal>
+            <div class="offer-aside">
+              <span class="offer-index">02 / Old software</span>
+              <h3 class="offer-name">Updating the software your business relies on.</h3>
+              <p class="offer-price">Starting at <b>$10,000</b></p>
+              <a class="link-arrow" href="#contact">Plan an update
+                <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M2 8h11M8.5 3.5 13 8l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+            </div>
+            <div class="offer-body">
+              <p class="offer-desc">
+                The software still does the job. It is also older than the team that maintains
+                it. We update what is out of date. We close the security gaps. We move it onto
+                current infrastructure without stopping the business.
+              </p>
+              <div class="offer-detail">
+                <div>
+                  <h4>The problem</h4>
+                  <ul class="list-x">
+                    <li>Software built years ago that still runs the business</li>
+                    <li>Frameworks no longer supported</li>
+                    <li>Security warnings no one has time to fix</li>
+                    <li>Updates that take longer than they should</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4>What you get</h4>
+                  <ul class="list-check">
+                    <li>Dependency and framework upgrades</li>
+                    <li>Security fixes</li>
+                    <li>Database and infrastructure moves</li>
+                    <li>A planned, documented move to current cloud infrastructure</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="offer" data-reveal>
+            <div class="offer-aside">
+              <span class="offer-index">03 / Repetitive work</span>
+              <h3 class="offer-name">Making repetitive work easier.</h3>
+              <p class="offer-price">Starting at <b>$15,000</b></p>
+              <a class="link-arrow" href="#contact">Take the repetition out
+                <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M2 8h11M8.5 3.5 13 8l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+            </div>
+            <div class="offer-body">
+              <p class="offer-desc">
+                We build custom internal tools around the way your team already works.
+                Copying data, reading documents, routing requests — the work that grows every
+                time you win a client. AI goes in where it saves real time.
+              </p>
+              <div class="offer-detail">
+                <div>
+                  <h4>The problem</h4>
+                  <ul class="list-x">
+                    <li>Too much manual data entry</li>
+                    <li>Tools that do not talk to each other</li>
+                    <li>Documents read and sorted by hand</li>
+                    <li>Work that stops when one person is out</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4>What you get</h4>
+                  <ul class="list-check">
+                    <li>Custom internal tools</li>
+                    <li>AI that reads, sorts, and drafts</li>
+                    <li>Incoming requests routed automatically</li>
+                    <li>Connections between the tools you already use</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <!-- PILOT -->
+        <aside class="pilot" data-reveal>
+          <div class="pilot-main">
+            <p class="eyebrow eyebrow-light">A smaller first step</p>
+            <h3>Start with one task. See what it saves.</h3>
+            <p>
+              Not ready for a larger project? Start with one. We pick a single, valuable task,
+              build it in your live environment, and show you the time it saves. You see the
+              result before you decide what comes next.
+            </p>
+            <a class="btn btn-primary" href="#contact">
+              Start with one task
+              <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 8h11M8.5 3.5 13 8l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </div>
+          <div class="pilot-side">
+            <p class="pilot-price"><span>Discovery and one connection</span><b>From $500</b></p>
+            <ul class="pilot-chips">
+              <li>An AI assistant</li>
+              <li>Incoming call routing</li>
+              <li>CRM connection</li>
+              <li>Document reading</li>
+            </ul>
+            <p class="pilot-foot">Paid discovery in your live environment. No open-ended trial.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- APPROACH -->
+    <section class="section section-tinted" id="approach">
+      <div class="container">
+        <header class="section-head">
+          <p class="eyebrow" data-reveal>How we work</p>
+          <h2 class="section-title" data-reveal style="--d:60ms">Clean scope. Fixed fees. Senior work only.</h2>
+          <p class="section-lead" data-reveal style="--d:120ms">
+            No junior hand-offs and no surprise invoices. We start with the people doing the
+            work, look at what happens between the steps, and put everything in writing.
+            Sometimes the answer is not a tool. We say so.
+          </p>
+        </header>
+
+        <ol class="steps">
+          <li class="step" data-reveal>
+            <span class="step-num">01</span>
+            <h3>First call</h3>
+            <p>Twenty minutes on the numbers that matter: what you spend, how old the software is, how many people do the work by hand, and where the hours go. If we are not the right fit, we say so on that call.</p>
+            <span class="step-tag">20 minutes · no slides</span>
+          </li>
+          <li class="step" data-reveal style="--d:80ms">
+            <span class="step-num">02</span>
+            <h3>Paid review</h3>
+            <p>A fixed-fee look at what you run. You get a written report you can act on with or without us.</p>
+            <span class="step-tag">From $500 · fixed fee</span>
+          </li>
+          <li class="step" data-reveal style="--d:160ms">
+            <span class="step-num">03</span>
+            <h3>Written plan &amp; fixed quote</h3>
+            <p>We map the work before anyone writes code. You approve the scope, price, and timeline in writing. No hourly guesswork.</p>
+            <span class="step-tag">Scope locked in writing</span>
+          </li>
+          <li class="step" data-reveal style="--d:240ms">
+            <span class="step-num">04</span>
+            <h3>Build &amp; handover</h3>
+            <p>We build, test, deploy, and document it. If you want, we stay on to keep it running.</p>
+            <span class="step-tag">Documented &amp; deployed</span>
+          </li>
+        </ol>
+
+        <div class="callout" data-reveal>
+          <div class="callout-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3 3 7v5c0 5 3.8 8.4 9 9 5.2-.6 9-4 9-9V7l-9-4Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m8.5 12 2.5 2.5 4.5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div>
+            <h3>We do not price the full job before we have looked.</h3>
+            <p>Old software is a black box until someone opens it. That is why every update starts with a paid, fixed-fee review.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RETAINER -->
+    <section class="section retainer" id="retainer">
+      <div class="container retainer-inner">
+        <div class="retainer-copy" data-reveal>
+          <p class="eyebrow eyebrow-light">Ongoing support</p>
+          <h2 class="section-title">After launch.</h2>
+          <p class="retainer-lead">
+            We stay involved. We handle hosting, security, updates, and the upkeep that
+            keeps things running. Recommended on every major build.
+          </p>
+          <p class="retainer-price">$500 – $2,000<small>+ / month</small></p>
+          <a class="btn btn-primary" href="#contact">
+            Add ongoing support
+            <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 8h11M8.5 3.5 13 8l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </div>
+        <div class="retainer-panel" data-reveal style="--d:120ms">
+          <span class="panel-label">Included</span>
+          <ul class="retainer-list">
+            <li>Server hosting &amp; uptime</li>
+            <li>Updates and monitoring</li>
+            <li>Security patches</li>
+            <li>A quarterly review</li>
+            <li>One person you can call</li>
+            <li>Priority on new work</li>
+          </ul>
+          <p class="retainer-note">No ticket queue, no per-seat pricing, no support scripts.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING -->
+    <section class="section" id="pricing">
+      <div class="container">
+        <header class="section-head section-head-split">
+          <div>
+            <p class="eyebrow" data-reveal>Pricing</p>
+            <h2 class="section-title" data-reveal style="--d:60ms">The menu, in plain numbers.</h2>
+          </div>
+          <p class="section-lead" data-reveal style="--d:120ms">
+            Every project is scoped and quoted in writing before work starts. Scope is the
+            only variable. The hourly rate never is.
+          </p>
+        </header>
+
+        <div class="table-wrap" data-reveal>
+          <table class="price-table">
+            <caption class="visually-hidden">IVI services and starting prices</caption>
+            <thead>
+              <tr>
+                <th scope="col">Service</th>
+                <th scope="col">What it's for</th>
+                <th scope="col">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Cloud &amp; AI spend review</th>
+                <td data-label="What it's for">AWS, Azure, or AI costs that keep climbing</td>
+                <td data-label="Price" class="price-cell">From $5,000</td>
+              </tr>
+              <tr>
+                <th scope="row">Updating the software your business relies on</th>
+                <td data-label="What it's for">Software built years ago, still running the business</td>
+                <td data-label="Price" class="price-cell">From $10,000</td>
+              </tr>
+              <tr>
+                <th scope="row">Making repetitive work easier</th>
+                <td data-label="What it's for">Work done by hand that a tool could do</td>
+                <td data-label="Price" class="price-cell">From $15,000</td>
+              </tr>
+              <tr>
+                <th scope="row">Discovery and one connection</th>
+                <td data-label="What it's for">Trying one task before a larger project</td>
+                <td data-label="Price" class="price-cell">From $500</td>
+              </tr>
+              <tr>
+                <th scope="row">Ongoing support</th>
+                <td data-label="What it's for">Hosting, uptime, patches, a quarterly review</td>
+                <td data-label="Price" class="price-cell">$500 – $2,000+/mo</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="price-note price-note-detail" data-reveal>
+          The <b>Cloud &amp; AI spend review</b> includes the savings report and implementation
+          plan. Implementation support and ongoing monitoring are quoted separately.
+        </p>
+        <p class="price-note" data-reveal>
+          Not sure which line applies? <a href="#contact">Send us your last cloud invoice</a> — we will tell you what we would do first.
+        </p>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section section-lined" id="faq">
+      <div class="container faq-layout">
+        <div class="faq-intro">
+          <p class="eyebrow" data-reveal>Questions</p>
+          <h2 class="section-title" data-reveal style="--d:60ms">Straight answers.</h2>
+          <p class="section-lead" data-reveal style="--d:120ms">
+            If yours is not here, ask it on the first call. We would rather say no early
+            than sell you the wrong project.
+          </p>
+          <a class="link-arrow" href="#contact" data-reveal style="--d:180ms">Ask us directly
+            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M2 8h11M8.5 3.5 13 8l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </div>
+
+        <div class="faq-list" data-reveal>
+          <div class="faq-item">
+            <h3>
+              <button class="faq-q" type="button" aria-expanded="true" aria-controls="faq-1" id="faq-q1">
+                Do you build products from scratch?
+                <span class="faq-icon" aria-hidden="true"></span>
+              </button>
+            </h3>
+            <div class="faq-a" id="faq-1" role="region" aria-labelledby="faq-q1">
+              <p>Rarely. We work on software that already makes money: applications in use, live infrastructure, and work people do every day. If you are pre-revenue and need a first version built, we are the wrong fit.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <h3>
+              <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-2" id="faq-q2">
+                Why is the first step paid?
+                <span class="faq-icon" aria-hidden="true"></span>
+              </button>
+            </h3>
+            <div class="faq-a" id="faq-2" role="region" aria-labelledby="faq-q2" aria-hidden="true">
+              <p>A $500–$1,500 discovery in your live environment shows you how we work before you commit to a larger project. You leave with a working connection and a written plan, whether or not you continue with us.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <h3>
+              <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-3" id="faq-q3">
+                How much does it cost to update old software?
+                <span class="faq-icon" aria-hidden="true"></span>
+              </button>
+            </h3>
+            <div class="faq-a" id="faq-3" role="region" aria-labelledby="faq-q3" aria-hidden="true">
+              <p>Projects start at $10,000 and usually land between $10,000 and $25,000 or more, depending on the age and condition of the software. We do not quote the full job before a paid review.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <h3>
+              <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-4" id="faq-q4">
+                Can you work with a non-technical founder?
+                <span class="faq-icon" aria-hidden="true"></span>
+              </button>
+            </h3>
+            <div class="faq-a" id="faq-4" role="region" aria-labelledby="faq-q4" aria-hidden="true">
+              <p>Yes. That is most of our clients with older software. We explain the technical decisions in business terms and give you a written report you can take to a board, a lender, or an acquirer.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <h3>
+              <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-5" id="faq-q5">
+                How do you get AI costs under control?
+                <span class="faq-icon" aria-hidden="true"></span>
+              </button>
+            </h3>
+            <div class="faq-a" id="faq-5" role="region" aria-labelledby="faq-q5" aria-hidden="true">
+              <p>We look at what you send to which model. Simple requests go to cheaper models. We add caching and batching where it is safe. Then we make the changes, if you want us to.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <h3>
+              <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-6" id="faq-q6">
+                What happens after launch?
+                <span class="faq-icon" aria-hidden="true"></span>
+              </button>
+            </h3>
+            <div class="faq-a" id="faq-6" role="region" aria-labelledby="faq-q6" aria-hidden="true">
+              <p>Most clients keep ongoing support for hosting, uptime, updates, and security patches, plus a quarterly review to find the next thing worth fixing.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section class="section contact" id="contact">
+      <div class="container contact-inner">
+        <div class="contact-copy" data-reveal>
+          <p class="eyebrow eyebrow-light">Start here</p>
+          <h2 class="section-title">Where does the work get harder than it needs to?</h2>
+          <p class="contact-lead">
+            A 20-minute call. No slide deck. Bring your last cloud invoice, the age of your
+            core software, and the task that takes the most hours. We will tell you what
+            we would do first — and whether it is worth doing at all.
+          </p>
+          <ul class="contact-points">
+            <li><span aria-hidden="true">→</span> Fixed-fee projects, no hourly billing</li>
+            <li><span aria-hidden="true">→</span> Senior engineers on every project</li>
+            <li><span aria-hidden="true">→</span> Everything in writing</li>
+          </ul>
+          <p class="contact-email">
+            Prefer email? <a href="mailto:hello@ivi.dev">hello@ivi.dev</a>
+          </p>
+        </div>
+
+        <div class="form-card" data-reveal style="--d:120ms">
+          <form id="fitForm" novalidate>
+            <div class="field-row">
+              <div class="field">
+                <label for="name">Name</label>
+                <input id="name" name="name" type="text" autocomplete="name" required placeholder="Alex Morgan" />
+              </div>
+              <div class="field">
+                <label for="email">Work email</label>
+                <input id="email" name="email" type="email" autocomplete="email" required placeholder="alex@company.com" />
+              </div>
+            </div>
+            <div class="field">
+              <label for="company">Company</label>
+              <input id="company" name="company" type="text" autocomplete="organization" required placeholder="Company name" />
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="spend">Monthly cloud / AI spend</label>
+                <select id="spend" name="spend" required>
+                  <option value="" selected disabled>Select a range</option>
+                  <option>Under $5,000</option>
+                  <option>$5,000 – $10,000</option>
+                  <option>$10,000 – $50,000</option>
+                  <option>$50,000+</option>
+                  <option>Not sure yet</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="need">Where the work gets harder</label>
+                <select id="need" name="need" required>
+                  <option value="" selected disabled>Select one</option>
+                  <option>Cloud &amp; AI costs</option>
+                  <option>Old software</option>
+                  <option>Manual work</option>
+                  <option>Something else</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="message">Anything else? <span class="optional">(optional)</span></label>
+              <textarea id="message" name="message" rows="3" placeholder="A sentence or two is plenty."></textarea>
+            </div>
+            <button class="btn btn-primary btn-block" type="submit">
+              Request a 20-minute call
+              <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 8h11M8.5 3.5 13 8l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <p class="form-note">One reply from a human, usually within one business day. No drip campaigns.</p>
+            <p class="form-error" id="formError" role="alert" hidden>Please fill in the required fields with a valid work email.</p>
+          </form>
+
+          <div class="form-success" id="formSuccess" tabindex="-1" hidden>
+            <span class="success-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22"><path d="m5 12.5 4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <h3>Request received.</h3>
+            <p>We will come back with two or three questions and a time. Check your inbox — including the spam folder, just in case.</p>
+            <button class="btn btn-ghost" type="button" id="formReset">Send another request</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <a class="brand brand-light" href="#top" aria-label="IVI — back to top">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 40 40" width="32" height="32" focusable="false">
+              <rect x="5" y="24" width="5" height="10" rx="1" fill="currentColor" />
+              <rect x="14" y="17" width="5" height="17" rx="1" fill="currentColor" />
+              <rect x="23" y="10" width="5" height="24" rx="1" fill="currentColor" />
+              <circle cx="32" cy="12" r="3.4" fill="#E9580C" />
+            </svg>
+          </span>
+          <span class="brand-type">
+            <span class="brand-name">IVI</span>
+            <span class="brand-sub">Engineering &amp; Automation</span>
+          </span>
+        </a>
+        <p>Custom internal tools, connections between the software you already use, and AI where it helps.</p>
+      </div>
+
+      <nav class="footer-nav" aria-label="Footer">
+        <div>
+          <span class="footer-head">Services</span>
+          <ul>
+            <li><a href="#services">Cloud &amp; AI costs</a></li>
+            <li><a href="#services">Updating old software</a></li>
+            <li><a href="#services">Repetitive work</a></li>
+            <li><a href="#services">One connection</a></li>
+          </ul>
+        </div>
+        <div>
+          <span class="footer-head">Company</span>
+          <ul>
+            <li><a href="#approach">How we work</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="#faq">FAQ</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+    <div class="container footer-bottom">
+      <p>© <span id="year">2026</span> IVI Engineering &amp; Automation. All rights reserved.</p>
+      <p>Orange County, CA · Remote-first · US &amp; EU business hours</p>
+    </div>
+  </footer>
+
+  <script src="/site/main.js" defer></script>
+</body>
+</html>

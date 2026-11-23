@@ -475,17 +475,12 @@ export default function Home() {
       )}
       {/* Header */}
       <header className="px-6 py-4 flex justify-between items-center bg-[#0a0a0a] border-b border-[#1a1a1a]">
-        <div className="flex items-baseline gap-3">
-          <h1 
-            className="text-white text-xl tracking-widest font-semibold cursor-pointer" 
-            onClick={() => { setMessages([]); setActiveSOP(null); setMode("horizontal"); }}
-          >
-            lVl
-          </h1>
-          <span className="text-[#555] text-[10px] uppercase tracking-widest">
-            deploy check · 2026-11-22
-          </span>
-        </div>
+        <h1 
+          className="text-white text-xl tracking-widest font-semibold cursor-pointer" 
+          onClick={() => { setMessages([]); setActiveSOP(null); setMode("horizontal"); }}
+        >
+          lVl
+        </h1>
         <div className="flex items-center gap-4">
           {!isTenant && (
             <>
