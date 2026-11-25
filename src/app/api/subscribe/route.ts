@@ -110,7 +110,7 @@ export async function POST(request: Request) {
     raw = await upstream.text();
   } catch {
     return fail(
-      "We could not reach the mailing list just now. Please try again, or email hello@ivi.dev.",
+      "We could not reach the mailing list just now. Please try again, or email hello@stblvl.com.",
       502,
     );
   }
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
   }
 
   return fail(
-    "We could not add you to the list. Please try again, or email hello@ivi.dev.",
+    "We could not add you to the list. Please try again, or email hello@stblvl.com.",
     502,
   );
 }

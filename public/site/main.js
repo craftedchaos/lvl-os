@@ -245,7 +245,7 @@
           success.focus({ preventScroll: true });
         })
         .catch(function () {
-          showError("We could not send that just now. Please try again, or email hello@ivi.dev.");
+          showError("We could not send that just now. Please try again, or email hello@stblvl.com.");
         })
         .then(function () {
           submitting = false;
