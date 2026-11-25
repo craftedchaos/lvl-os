@@ -1384,6 +1384,21 @@ h1, h2, h3, h4 {
   font-size: 0.78rem;
   line-height: 1.5;
 }
+
+/* Mailchimp honeypot: invisible to people, tempting to bots */
+.hp-field {
+  position: absolute !important;
+  left: -5000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  transform: none;
+}
 .form-success {
   display: flex;
   flex-direction: column;

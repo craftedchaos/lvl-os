@@ -169,8 +169,28 @@
   }
 
   if (form && success) {
+    var submitBtn = form.querySelector('button[type="submit"]');
+    var defaultError = errorEl ? errorEl.textContent : "";
+    var submitting = false;
+
+    function showError(message) {
+      if (!errorEl) return;
+      errorEl.textContent = message || defaultError;
+      errorEl.hidden = false;
+    }
+
+    function readValue(id) {
+      var el = document.getElementById(id);
+      return el ? (el.value || "").trim() : "";
+    }
+
     form.addEventListener("submit", function (event) {
+      // With JavaScript, submit to our API so errors are visible and the
+      // success state stays on the page. Without it, the form posts natively
+      // to Mailchimp in a new tab.
       event.preventDefault();
+      if (submitting) return;
+
       var fields = Array.prototype.slice.call(form.querySelectorAll("[required]"));
       var firstInvalid = null;
 
@@ -181,15 +201,57 @@
       });
 
       if (firstInvalid) {
-        if (errorEl) errorEl.hidden = false;
+        showError(defaultError);
         firstInvalid.focus();
         return;
       }
 
+      var honeypot = form.querySelector('input[name^="b_"]');
+      var payload = {
+        name: readValue("name"),
+        email: readValue("email"),
+        company: readValue("company"),
+        spend: readValue("spend"),
+        need: readValue("need"),
+        message: readValue("message"),
+        honeypot: honeypot ? honeypot.value : ""
+      };
+
+      submitting = true;
       if (errorEl) errorEl.hidden = true;
-      form.hidden = true;
-      success.hidden = false;
-      success.focus({ preventScroll: true });
+      form.setAttribute("aria-busy", "true");
+      if (submitBtn) submitBtn.disabled = true;
+
+      fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+        .then(function (response) {
+          return response
+            .json()
+            .catch(function () { return {}; })
+            .then(function (data) {
+              return { ok: response.ok && data.ok !== false, data: data };
+            });
+        })
+        .then(function (result) {
+          if (!result.ok) {
+            showError(result.data && result.data.error);
+            return;
+          }
+          form.hidden = true;
+          success.hidden = false;
+          success.focus({ preventScroll: true });
+        })
+        .catch(function () {
+          showError("We could not send that just now. Please try again, or email hello@ivi.dev.");
+        })
+        .then(function () {
+          submitting = false;
+          form.removeAttribute("aria-busy");
+          if (submitBtn) submitBtn.disabled = false;
+        });
     });
 
     form.addEventListener("input", function (event) {
@@ -205,6 +267,10 @@
         form.querySelectorAll("[aria-invalid]").forEach(function (field) {
           field.setAttribute("aria-invalid", "false");
         });
+        if (errorEl) {
+          errorEl.textContent = defaultError;
+          errorEl.hidden = true;
+        }
         success.hidden = true;
         form.hidden = false;
         var first = form.querySelector("input");
